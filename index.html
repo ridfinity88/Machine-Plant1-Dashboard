@@ -1,87 +1,144 @@
-</span>
-        <span id="pressure2">0 bar</span>
-      </div>
-
-      <div class="info-box">
-        <span class="label">Status</span>
-        <span id="status2" class="running">RUNNING</span>
-      </div>
-    </div>
-  </div><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Machine Dashboard</title>
-
-  <link rel="stylesheet" href="style.css">
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Machine Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 0.75 lazy; overflow: hidden; }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1.2fr 0.8fr;
+            gap: 1rem;
+            height: calc(100vh - 4rem);
+        }
+    </style>
 </head>
-<body>
+<body class="p-4 font-sans">
+    <header class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold text-blue-400">MACHINE MONITORING SYSTEM</h1>
+        <div id="clock" class="text-lg font-mono">Loading time...</div>
+    </header>
 
-<div class="dashboard">
+    <div class="grid-container">
+        <div class="card relative flex flex-col items-center justify-center p-2">
+            <span class="absolute top-2 left-3 text-xs text-slate-500">① MACHINE INLET</span>
+            <img src="IN.png" alt="Machine In" class="max-h-full object-contain">
+        </div>
 
-  <!-- SECTION 1 -->
-  <div class="card machine-card">
-    <div class="title">SJ1</div>
-    <img src="IN.png" class="machine-img">
+        <div class="card relative flex flex-col items-center justify-center p-2">
+            <span class="absolute top-2 left-3 text-xs text-slate-500">② MACHINE OUTLET</span>
+            <img src="OUT.png" alt="Machine Out" class="max-h-full object-contain">
+        </div>
 
-    <div class="machine-info">
-      <div class="info-box">
-        <span class="label">Temperature</span>
-        <span id="temp1">0°C</span>
-      </div>
+        <div class="grid grid-rows-2 gap-4">
+            <div class="card relative p-4 flex items-center">
+                <span class="absolute top-2 left-3 text-xs text-slate-500">③ STATUS RATIO</span>
+                <div class="w-1/2 h-full">
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div class="w-1/2 pl-4">
+                    <div class="text-sm">Efficiency: <span id="eff-val" class="text-green-400 font-bold">--%</span></div>
+                    <div class="text-sm">Downtime: <span id="down-val" class="text-red-400 font-bold">-- min</span></div>
+                </div>
+            </div>
+            <div class="card relative p-4">
+                <span class="absolute top-2 left-3 text-xs text-slate-500">④ PRODUCTION LINE CHART</span>
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
 
-      <div class="info-box">
-        <span class="label">Pressure</span>
-        <span id="pressure1">0 bar</span>
-      </div>
-
-      <div class="info-box">
-        <span class="label">Status</span>
-        <span id="status1" class="running">RUNNING</span>
-      </div>
+        <div class="card relative p-6">
+            <span class="absolute top-2 left-3 text-xs text-slate-500">⑤ DATA SUMMARY FROM GOOGLE SHEETS</span>
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-slate-700 text-blue-300">
+                            <th class="py-2">Parameter</th>
+                            <th class="py-2">Value</th>
+                            <th class="py-2">Unit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table">
+                        <tr><td class="py-3">Loading...</td><td></td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-  </div>
 
+    <script>
+        // 1. นาฬิกาบอกเวลา
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleString();
+        }, 1000);
 
-  <!-- SECTION 2 -->
-  <div class="card machine-card">
-    <div class="title">SJ2</div>
-    <img src="OUT.png" class="machine-img">
+        // 2. ตั้งค่ากราฟเบื้องต้น
+        const ctxPie = document.getElementById('pieChart').getContext('2d');
+        const pieChart = new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: ['Running', 'Idle', 'Alarm'],
+                datasets: [{
+                    data: [70, 20, 10],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: { plugins: { legend: { display: false } } }
+        });
 
-    <div class="machine-info">
-      <div class="info-box">
-        <span class="label">Temperature</span>
-        <span id="temp2">0°C</span>
-      </div>
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['08:00', '10:00', '12:00', '14:00', '16:00'],
+                datasets: [{
+                    label: 'Output',
+                    data: [120, 150, 140, 180, 170],
+                    borderColor: '#3b82f6',
+                    tension: 0.4
+                }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+        });
 
-      <div class="info-box">
-        <span class="label">Pressure
+        // 3. ฟังก์ชันดึงข้อมูลจาก Google Sheets (Web App URL ที่คุณสร้าง)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxv6bnAcV-eUhDOA1AwgrmucOBGVszIYWpZHTPwy2y3mR8uLI-63Zy3hEoIPYu386KTg/exec"; 
 
+        async function fetchData() {
+            try {
+                // ตัวอย่างการเรียก (คุณต้องทำ doGet ใน GS เพื่อส่งข้อมูลกลับมา)
+                // const response = await fetch(SCRIPT_URL);
+                // const data = await response.json();
+                
+                // จำลองข้อมูลที่ได้จาก Sheet
+                const mockData = [
+                    { p: "Temperature", v: "45.2", u: "°C" },
+                    { p: "Pressure", v: "1.2", u: "Bar" },
+                    { p: "Daily Target", v: "1500", u: "Pcs" }
+                ];
 
-  <!-- SECTION 3 -->
-  <div class="card chart-card">
-    <div class="title">Production Overview</div>
-    <canvas id="pieChart"></canvas>
-  </div>
+                let html = "";
+                mockData.forEach(item => {
+                    html += `<tr class="border-b border-slate-800">
+                        <td class="py-3 text-slate-400">${item.p}</td>
+                        <td class="py-3 text-xl font-bold text-white">${item.v}</td>
+                        <td class="py-3 text-slate-500">${item.u}</td>
+                    </tr>`;
+                });
+                document.getElementById('data-table').innerHTML = html;
+            } catch (e) {
+                console.error("Fetch Error:", e);
+            }
+        }
 
-
-  <!-- SECTION 4 -->
-  <div class="card chart-card">
-    <div class="title">Temperature Trend</div>
-    <canvas id="lineChart"></canvas>
-  </div>
-
-
-  <!-- SECTION 5 -->
-  <div class="card table-card">
-    <div class="title">Machine Data</div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Machine</th>
-          <th>Temp</th>
+        fetchData();
+        setInterval(fetchData, 30000); // อัปเดตทุก 30 วินาที
+    </script>
+</body>
 </html>
