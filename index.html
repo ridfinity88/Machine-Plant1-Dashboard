@@ -7,65 +7,63 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #0f172a; color: #f8fafc; }
-        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 0.75 lazy; overflow: hidden; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; background-color: #0f172a; color: #f8fafc; }
+        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; position: relative; overflow: hidden; }
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1.2fr 0.8fr;
             gap: 1rem;
-            height: calc(100vh - 4rem);
+            height: calc(100vh - 5rem);
         }
     </style>
 </head>
-<body class="p-4 font-sans">
-    <header class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold text-blue-400">MACHINE MONITORING SYSTEM</h1>
-        <div id="clock" class="text-lg font-mono">Loading time...</div>
+<body class="p-4 font-sans flex flex-col">
+    <header class="flex justify-between items-center mb-4 h-10">
+        <h1 class="text-2xl font-bold text-blue-400 uppercase tracking-wider">Machine Monitoring System</h1>
+        <div id="clock" class="text-lg font-mono text-slate-400">Loading time...</div>
     </header>
 
     <div class="grid-container">
-        
-        <div class="card relative flex flex-col items-center justify-center p-2">
-    <span class="absolute top-2 left-3 text-xs text-slate-500">① MACHINE INLET</span>
-    <img src="in.png" alt="Machine In" class="max-h-full object-contain">
-</div>
+        <div class="card flex flex-col items-center justify-center p-4">
+            <span class="absolute top-2 left-3 text-xs text-slate-500 font-bold">① MACHINE INLET</span>
+            <img src="in.png" alt="Machine Inlet" class="max-h-full w-auto object-contain">
+        </div>
 
-<div class="card relative flex flex-col items-center justify-center p-2">
-    <span class="absolute top-2 left-3 text-xs text-slate-500">② MACHINE OUTLET</span>
-    <img src="out.png" alt="Machine Out" class="max-h-full object-contain">
-</div>
+        <div class="card flex flex-col items-center justify-center p-4">
+            <span class="absolute top-2 left-3 text-xs text-slate-500 font-bold">② MACHINE OUTLET</span>
+            <img src="out.png" alt="Machine Outlet" class="max-h-full w-auto object-contain">
+        </div>
 
         <div class="grid grid-rows-2 gap-4">
-            <div class="card relative p-4 flex items-center">
-                <span class="absolute top-2 left-3 text-xs text-slate-500">③ STATUS RATIO</span>
-                <div class="w-1/2 h-full">
-                    <canvas id="pieChart"></canvas>
-                </div>
-                <div class="w-1/2 pl-4">
-                    <div class="text-sm">Efficiency: <span id="eff-val" class="text-green-400 font-bold">--%</span></div>
-                    <div class="text-sm">Downtime: <span id="down-val" class="text-red-400 font-bold">-- min</span></div>
+            <div class="card flex items-center p-4">
+                <span class="absolute top-2 left-3 text-xs text-slate-500 font-bold">③ STATUS RATIO</span>
+                <div class="w-1/2 h-full"><canvas id="pieChart"></canvas></div>
+                <div class="w-1/2 pl-6">
+                    <div class="text-sm text-slate-400">Efficiency: <span id="eff-val" class="text-green-400 font-bold">--%</span></div>
+                    <div class="text-sm text-slate-400">Downtime: <span class="text-red-400 font-bold">0 min</span></div>
                 </div>
             </div>
-            <div class="card relative p-4">
-                <span class="absolute top-2 left-3 text-xs text-slate-500">④ PRODUCTION LINE CHART</span>
+            <div class="card p-4">
+                <span class="absolute top-2 left-3 text-xs text-slate-500 font-bold">④ PRODUCTION LINE CHART</span>
                 <canvas id="lineChart"></canvas>
             </div>
         </div>
 
-        <div class="card relative p-6">
-            <span class="absolute top-2 left-3 text-xs text-slate-500">⑤ DATA SUMMARY FROM GOOGLE SHEETS</span>
-            <div class="mt-4 overflow-x-auto">
+        <div class="card p-6">
+            <span class="absolute top-2 left-3 text-xs text-slate-500 font-bold">⑤ DATA SUMMARY (FROM GOOGLE SHEETS)</span>
+            <div class="mt-4 overflow-hidden">
                 <table class="w-full text-left">
                     <thead>
-                        <tr class="border-b border-slate-700 text-blue-300">
-                            <th class="py-2">Parameter</th>
-                            <th class="py-2">Value</th>
-                            <th class="py-2">Unit</th>
+                        <tr class="border-b border-slate-700 text-blue-300 text-sm">
+                            <th class="py-2">Machine</th>
+                            <th class="py-2">Temp (°C)</th>
+                            <th class="py-2">Pressure (Bar)</th>
+                            <th class="py-2">Status</th>
                         </tr>
                     </thead>
-                    <tbody id="data-table">
-                        <tr><td class="py-3">Loading...</td><td></td><td></td></tr>
+                    <tbody id="data-table" class="text-sm">
+                        <tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Connecting to Google Sheets...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -73,80 +71,59 @@
     </div>
 
     <script>
-        // 1. นาฬิกาบอกเวลา
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec";
+
+        // 1. Clock
         setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleString();
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
         }, 1000);
 
-        // 2. ตั้งค่ากราฟเบื้องต้น
-        const ctxPie = document.getElementById('pieChart').getContext('2d');
-        const pieChart = new Chart(ctxPie, {
+        // 2. Charts
+        const pieChart = new Chart(document.getElementById('pieChart'), {
             type: 'doughnut',
             data: {
                 labels: ['Running', 'Idle', 'Alarm'],
-                datasets: [{
-                    data: [70, 20, 10],
-                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                    borderWidth: 0
-                }]
+                datasets: [{ data: [85, 10, 5], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
             },
-            options: { plugins: { legend: { display: false } } }
+            options: { plugins: { legend: { display: false } }, cutout: '70%' }
         });
 
-        const ctxLine = document.getElementById('lineChart').getContext('2d');
-        new Chart(ctxLine, {
+        const lineChart = new Chart(document.getElementById('lineChart'), {
             type: 'line',
             data: {
                 labels: ['08:00', '10:00', '12:00', '14:00', '16:00'],
-                datasets: [{
-                    label: 'Output',
-                    data: [120, 150, 140, 180, 170],
-                    borderColor: '#3b82f6',
-                    tension: 0.4
-                }]
+                datasets: [{ label: 'Output', data: [12, 19, 15, 25, 22], borderColor: '#3b82f6', tension: 0.4, fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)' }]
             },
-            options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+            options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#64748b' } } } }
         });
 
-        // 3. ฟังก์ชันดึงข้อมูลจาก Google Sheets (Web App URL ที่คุณสร้าง)
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec"; 
-
-async function fetchData() {
-    try {
-        const response = await fetch(SCRIPT_URL);
-        const data = await response.json();
-        
-        console.log("Data from Sheet:", data); // ดูข้อมูลใน Console (F12)
-
-        let html = "";
-        // วนลูปข้อมูลจากอาเรย์ table ที่คุณสร้างไว้ใน .gs
-        data.table.forEach(item => {
-            html += `
-            <tr class="border-b border-slate-800">
-                <td class="py-3 text-slate-400 font-bold">${item.machine}</td>
-                <td class="py-3 text-xl font-bold text-blue-400">${item.temp} <span class="text-xs text-slate-500">°C</span></td>
-                <td class="py-3 text-xl font-bold text-green-400">${item.pressure} <span class="text-xs text-slate-500">Bar</span></td>
-                <td class="py-3">
-                    <span class="px-2 py-1 rounded text-xs ${item.status === 'Running' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
-                        ${item.status}
-                    </span>
-                </td>
-            </tr>`;
-        });
-        
-        document.getElementById('data-table').innerHTML = html;
-
-        // อัปเดตค่า Efficiency/Downtime จำลองจากค่าใน Machine 1
-        document.getElementById('eff-val').innerText = data.machine1.temp + "%"; 
-        
-    } catch (e) {
-        console.error("Fetch Error:", e);
-        document.getElementById('data-table').innerHTML = `<tr><td colspan="4" class="text-red-400 py-4 text-center">เชื่อมต่อข้อมูลไม่ได้: ${e.message}</td></tr>`;
-    }
-}
+        // 3. Fetch Data
+        async function fetchData() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                
+                let html = "";
+                data.table.forEach(item => {
+                    const statusClass = item.status === 'Running' ? 'bg-green-900 text-green-300' : 'bg-amber-900 text-amber-300';
+                    html += `
+                    <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                        <td class="py-3 font-bold text-slate-300">${item.machine}</td>
+                        <td class="py-3 text-xl font-bold text-blue-400">${item.temp}</td>
+                        <td class="py-3 text-xl font-bold text-emerald-400">${item.pressure}</td>
+                        <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusClass}">${item.status}</span></td>
+                    </tr>`;
+                });
+                document.getElementById('data-table').innerHTML = html;
+                document.getElementById('eff-val').innerText = data.machine1.temp + "%";
+            } catch (e) {
+                console.error("Fetch error:", e);
+            }
+        }
 
         fetchData();
-        setInterval(fetchData, 30000); // อัปเดตทุก 30 วินาที
+        setInterval(fetchData, 10000); // อัปเดตทุก 10 วินาที
     </script>
 </body>
 </html>
