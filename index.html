@@ -108,34 +108,41 @@
         });
 
         // 3. ฟังก์ชันดึงข้อมูลจาก Google Sheets (Web App URL ที่คุณสร้าง)
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxv6bnAcV-eUhDOA1AwgrmucOBGVszIYWpZHTPwy2y3mR8uLI-63Zy3hEoIPYu386KTg/exec"; 
+const SCRIPT_URL = "ใส่_URL_DEPLOYMENT_อันใหม่ของคุณที่นี่"; 
 
-        async function fetchData() {
-            try {
-                // ตัวอย่างการเรียก (คุณต้องทำ doGet ใน GS เพื่อส่งข้อมูลกลับมา)
-                // const response = await fetch(SCRIPT_URL);
-                // const data = await response.json();
-                
-                // จำลองข้อมูลที่ได้จาก Sheet
-                const mockData = [
-                    { p: "Temperature", v: "45.2", u: "°C" },
-                    { p: "Pressure", v: "1.2", u: "Bar" },
-                    { p: "Daily Target", v: "1500", u: "Pcs" }
-                ];
+async function fetchData() {
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        
+        console.log("Data from Sheet:", data); // ดูข้อมูลใน Console (F12)
 
-                let html = "";
-                mockData.forEach(item => {
-                    html += `<tr class="border-b border-slate-800">
-                        <td class="py-3 text-slate-400">${item.p}</td>
-                        <td class="py-3 text-xl font-bold text-white">${item.v}</td>
-                        <td class="py-3 text-slate-500">${item.u}</td>
-                    </tr>`;
-                });
-                document.getElementById('data-table').innerHTML = html;
-            } catch (e) {
-                console.error("Fetch Error:", e);
-            }
-        }
+        let html = "";
+        // วนลูปข้อมูลจากอาเรย์ table ที่คุณสร้างไว้ใน .gs
+        data.table.forEach(item => {
+            html += `
+            <tr class="border-b border-slate-800">
+                <td class="py-3 text-slate-400 font-bold">${item.machine}</td>
+                <td class="py-3 text-xl font-bold text-blue-400">${item.temp} <span class="text-xs text-slate-500">°C</span></td>
+                <td class="py-3 text-xl font-bold text-green-400">${item.pressure} <span class="text-xs text-slate-500">Bar</span></td>
+                <td class="py-3">
+                    <span class="px-2 py-1 rounded text-xs ${item.status === 'Running' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
+                        ${item.status}
+                    </span>
+                </td>
+            </tr>`;
+        });
+        
+        document.getElementById('data-table').innerHTML = html;
+
+        // อัปเดตค่า Efficiency/Downtime จำลองจากค่าใน Machine 1
+        document.getElementById('eff-val').innerText = data.machine1.temp + "%"; 
+        
+    } catch (e) {
+        console.error("Fetch Error:", e);
+        document.getElementById('data-table').innerHTML = `<tr><td colspan="4" class="text-red-400 py-4 text-center">เชื่อมต่อข้อมูลไม่ได้: ${e.message}</td></tr>`;
+    }
+}
 
         fetchData();
         setInterval(fetchData, 30000); // อัปเดตทุก 30 วินาที
