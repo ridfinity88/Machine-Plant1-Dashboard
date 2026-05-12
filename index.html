@@ -3,40 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Symmetry Machine Dashboard - Rearranged</title>
+    <title>Symmetry Machine Dashboard - Independent Scaling</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* ============================================================
+           [ จุดแก้ไขหลัก ] สำหรับปรับขนาด X และ Y ของแต่ละส่วน
+           ============================================================ */
+        
+        :root {
+            /* 1. ปรับแนว X (ความกว้างคอลัมน์): รวมกันต้องได้สัดส่วนที่พอดี (เช่น 0.5 + 1.2 + 0.5) */
+            --width-col-left: 0.5fr;   /* ขนาด X ของ DATA */
+            --width-col-center: 1.2fr; /* ขนาด X ของกลุ่มเครื่องจักรกลาง */
+            --width-col-right: 0.5fr;  /* ขนาด X ของกลุ่มกราฟขวา */
+
+            /* 2. ปรับแนว Y (ความสูง Card กลาง): ปรับเลขเพื่อยืด/หด แต่ละรูปอิสระ */
+            --height-cen-view: 1fr;    /* ความสูง Y ของ Center View */
+            --height-machine-1: 1fr;   /* ความสูง Y ของ Machine Inlet */
+            --height-machine-2: 1.2fr; /* ความสูง Y ของ Machine Outlet */
+
+            /* 3. ปรับแนว Y (ความสูง Card ขวา): */
+            --height-chart-top: 1fr;    /* ความสูง Y ของ Status Ratio */
+            --height-chart-bottom: 1fr; /* ความสูง Y ของ Production */
+        }
+
+        /* ============================================================ */
+
         html, body { 
             height: 100vh; 
-            margin: 0; 
-            padding: 0;
+            margin: 0; padding: 0;
             overflow: hidden; 
             background-color: #000000; 
             color: #f8fafc; 
         }
 
-        /* [จุดปรับที่ 1] ปรับความกว้างของ 3 คอลัมน์ (ซ้าย : กลาง : ขวา) */
+        /* [โครงสร้างหลัก] ใช้ค่าตัวแปรจาก :root */
         .dashboard-container {
             display: grid;
-            grid-template-columns: 0.5fr 1fr 0.5fr; 
+            grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right);
             gap: 1rem;
             height: calc(100vh - 4.5rem);
             padding: 0 1rem 1rem 1rem;
         }
 
-        /* [จุดปรับที่ 2] ควบคุมความสูงของแผงกลาง (3 Card) */
+        /* [แผงกลาง] ปรับความสูง Y แยกกันตามตัวแปร */
         .center-panel {
             display: grid;
-            /* แก้ไขตรงนี้เพื่อปรับสูง-ต่ำ: 1fr คือส่วนสูงเท่ากัน, สามารถแก้เป็นเช่น 0.8fr 1.1fr 1.1fr ได้ */
-            grid-template-rows: 1fr 1fr 1fr; 
+            grid-template-rows: var(--height-cen-view) var(--height-machine-1) var(--height-machine-2);
             gap: 1rem;
         }
 
-        /* [จุดปรับที่ 3] ควบคุมความสูงของฝั่งขวา */
+        /* [แผงขวา] ปรับความสูง Y แยกกันตามตัวแปร */
         .right-panel {
             display: grid;
-            grid-template-rows: 1fr 1fr; 
+            grid-template-rows: var(--height-chart-top) var(--height-chart-bottom);
             gap: 1rem;
         }
 
@@ -62,8 +82,7 @@
 
         .label-tag {
             position: absolute;
-            top: 0.75rem;
-            left: 0.75rem;
+            top: 0.75rem; left: 0.75rem;
             font-size: 0.7rem;
             color: #94a3b8;
             font-weight: bold;
@@ -101,12 +120,10 @@
                 <span class="label-tag">Center View</span>
                 <img src="cen.png" alt=" " class="machine-img">
             </div>
-            
             <div class="card">
                 <span class="label-tag">① MACHINE INLET</span>
                 <img src="in.png" alt=" " class="machine-img">
             </div>
-            
             <div class="card">
                 <span class="label-tag">② MACHINE OUTLET</span>
                 <img src="out.png" alt=" " class="machine-img">
@@ -137,7 +154,6 @@
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec";
-
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
         const pieChart = new Chart(document.getElementById('pieChart'), {
