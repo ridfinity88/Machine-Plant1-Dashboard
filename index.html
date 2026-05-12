@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personnel Monitoring Dashboard Pro (Draggable)</title>
-    <!-- เพิ่ม SortableJS Library สำหรับการลากวาง -->
+    <title>Personnel Monitoring Dashboard Pro (Persistent Draggable)</title>
+    <!-- SortableJS Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -78,7 +78,6 @@
             flex-grow: 1; align-content: start; min-height: 80px; overflow-y: auto;
         }
 
-        /* ตกแต่งบล็อกขณะถูกลาก */
         .sortable-ghost { opacity: 0.2; background: var(--accent-blue) !important; }
         .sortable-chosen { border: 1px solid var(--accent-blue); }
 
@@ -128,7 +127,6 @@
     <div class="loading-text">กำลังดึงข้อมูลจาก Google Sheets...</div>
 </div>
 
-<!-- Auth Modal -->
 <div id="authOverlay">
     <div class="modal">
         <h3 style="text-align: center;">กรุณาใส่รหัสผ่าน</h3>
@@ -137,7 +135,6 @@
     </div>
 </div>
 
-<!-- Input Modal -->
 <div id="modalOverlay">
     <div class="modal">
         <div class="delete-btn-corner" onclick="askDelete()">🗑️</div>
@@ -167,32 +164,29 @@
     const FIXED_GROUP_NAMES = {
         1: "ห้องเนื้อ", 2: "COOK1&3", 3: "ห้องส่วนผสม", 4: "ห้องผัก",
         5: "ห้องหุงข้าว", 6: "ห้องย่างไก่", 7: "COOK2", 8: "ห้องล้างโซนดิบ",
-        9: "ห้องผสมไส้", 10: "ห้องส่งออก", 11: "PACK A", 12: "PACK B,
+        9: "ห้องผสมไส้", 10: "ห้องส่งออก", 11: "PACK A", 12: "PACK B",
         13: "ห้องข้าว", 14: "ห้องกล่อง", 15: "ห้องเบอร์เกอร์"
     };
 
     let appData = JSON.parse(localStorage.getItem('heatmapData')) || {};
+    let groupOrder = JSON.parse(localStorage.getItem('groupOrder')) || {};
     let nameMap = {};
     let leaderStatusMap = {};
     let currentTargetId = null;
+    let rawSheetData = [];
 
     async function loadSheetData() {
         try {
             const response = await fetch(SHEET_API_URL);
-            const sheetData = await response.json();
+            rawSheetData = await response.json();
             
-            if (sheetData && sheetData.length > 0) {
-                const groupItems = {};
-                for (let i = 1; i <= totalGroups; i++) groupItems[i] = [];
-
-                sheetData.forEach((item, index) => {
-                    let gNum = (index % totalGroups) + 1; 
-                    groupItems[gNum].push(item);
+            if (rawSheetData && rawSheetData.length > 0) {
+                // เก็บข้อมูลพื้นฐาน
+                rawSheetData.forEach(item => {
                     nameMap[item.id] = item.name;
                     leaderStatusMap[item.id] = item.isLeader;
                 });
-                
-                renderDashboard(groupItems);
+                renderDashboard();
             }
         } catch (error) {
             console.error("Fetch Error:", error);
@@ -200,10 +194,38 @@
         }
     }
 
-    function renderDashboard(groupItems) {
+    function renderDashboard() {
         const container = document.getElementById('dashboard');
         container.innerHTML = '';
         
+        // เตรียมโครงสร้างข้อมูลกลุ่ม
+        const groupContents = {};
+        for (let i = 1; i <= totalGroups; i++) groupContents[i] = [];
+
+        // ตรวจสอบข้อมูลจาก Sheet ว่าตัวไหน "ยังไม่มีที่อยู่" (เป็นข้อมูลใหม่)
+        const placedIds = new Set();
+        Object.values(groupOrder).forEach(ids => ids.forEach(id => placedIds.add(id)));
+
+        // 1. ใส่ตัวที่เคยบันทึกตำแหน่งไว้แล้ว
+        for (let g = 1; g <= totalGroups; g++) {
+            if (groupOrder[g]) {
+                groupOrder[g].forEach(id => {
+                    if (nameMap[id]) { // ตรวจสอบว่า ID นั้นยังอยู่ใน Sheet หรือไม่
+                        groupContents[g].push(id);
+                    }
+                });
+            }
+        }
+
+        // 2. ถ้ามีข้อมูลใหม่ใน Sheet ที่ยังไม่เคยถูกจัดตำแหน่ง ให้แจกจ่ายตามลำดับกลุ่มปกติ
+        rawSheetData.forEach((item, index) => {
+            if (!placedIds.has(item.id.toString()) && !placedIds.has(item.id)) {
+                let targetG = (index % totalGroups) + 1;
+                groupContents[targetG].push(item.id);
+            }
+        });
+
+        // สร้าง HTML
         for (let g = 1; g <= totalGroups; g++) {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-container';
@@ -212,29 +234,36 @@
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'group-content';
-            contentDiv.id = `group-${g}`; // ID สำหรับ Sortable
+            contentDiv.id = `group-${g}`;
 
-            if (groupItems[g]) {
-                groupItems[g].forEach(item => {
-                    contentDiv.appendChild(createBlock(item.id));
-                });
-            }
+            groupContents[g].forEach(id => {
+                contentDiv.appendChild(createBlock(id));
+            });
             
             groupDiv.appendChild(contentDiv);
             container.appendChild(groupDiv);
 
-            // เปิดใช้งานการลากวางสำหรับกลุ่มนี้
+            // เปิดใช้งาน SortableJS และตั้งค่าให้บันทึกเมื่อขยับ
             new Sortable(contentDiv, {
-                group: 'shared', // ย้ายข้ามกลุ่มได้
+                group: 'shared',
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
-                onEnd: function (evt) {
-                    // เมื่อลากวางเสร็จ สามารถเขียนฟังก์ชันเก็บตำแหน่งลง LocalStorage เพิ่มเติมได้ที่นี่
-                    console.log('Moved item:', evt.item.id, 'from', evt.from.id, 'to', evt.to.id);
-                }
+                onEnd: saveAllOrders // เรียกฟังก์ชันบันทึกตำแหน่งทุกครั้งที่วาง
             });
         }
+    }
+
+    function saveAllOrders() {
+        const newOrder = {};
+        for (let i = 1; i <= totalGroups; i++) {
+            const el = document.getElementById(`group-${i}`);
+            if (el) {
+                newOrder[i] = Array.from(el.children).map(child => child.id);
+            }
+        }
+        groupOrder = newOrder;
+        localStorage.setItem('groupOrder', JSON.stringify(groupOrder));
     }
 
     function createBlock(id) {
@@ -244,9 +273,7 @@
         div.id = id;
         div.innerText = nameMap[id] || "N/A";
         
-        // ใช้ Click แทน mousedown เพื่อไม่ให้กวนกับการลาก
         div.onclick = (e) => {
-            // ป้องกันการเปิด Modal ถ้ากำลังลาก
             if (e.target === div) openModal(id);
         };
         
@@ -259,9 +286,9 @@
         document.getElementById('modalTitle').innerText = nameMap[id];
         document.getElementById('modalOverlay').style.display = 'flex';
         const d = appData[id] || { v1: '', v2: '', v3: '' };
-        document.getElementById('opt1').value = d.v1 === undefined || d.v1 === "" ? "" : d.v1.toString();
-        document.getElementById('opt2').value = d.v2 === undefined || d.v2 === "" ? "" : d.v2.toString();
-        document.getElementById('opt3').value = d.v3 === undefined || d.v3 === "" ? "" : d.v3.toString();
+        document.getElementById('opt1').value = (d.v1 === "" || d.v1 === undefined) ? "" : d.v1.toString();
+        document.getElementById('opt2').value = (d.v2 === "" || d.v2 === undefined) ? "" : d.v2.toString();
+        document.getElementById('opt3').value = (d.v3 === "" || d.v3 === undefined) ? "" : d.v3.toString();
         validateForm();
     }
 
@@ -295,15 +322,16 @@
     function askDelete() { document.getElementById('confirmOverlay').style.display = 'flex'; }
     function confirmDelete() {
         const el = document.getElementById(currentTargetId);
-        if(el) el.remove(); // ลบออกจาก DOM ถาวรใน Session นี้
+        if(el) el.remove();
+        saveAllOrders(); // บันทึกตำแหน่งหลังลบออก
         document.getElementById('confirmOverlay').style.display = 'none';
         closeModal();
     }
 
     function manualReset() {
-        if (prompt("รหัสผ่าน RESET สถานะสี:") === MASTER_KEY) {
-            appData = {};
-            localStorage.setItem('heatmapData', JSON.stringify(appData));
+        if (prompt("รหัสผ่าน RESET ข้อมูลทั้งหมด (รวมตำแหน่ง):") === MASTER_KEY) {
+            localStorage.removeItem('heatmapData');
+            localStorage.removeItem('groupOrder');
             location.reload();
         }
     }
@@ -324,51 +352,6 @@
             document.getElementById('liveClock').innerText = new Date().toLocaleString('th-TH');
         }, 1000);
     };
-
-// 1. เพิ่มตัวแปรสำหรับเก็บลำดับกลุ่ม
-let groupOrder = JSON.parse(localStorage.getItem('groupOrder')) || {};
-
-// 2. ปรับฟังก์ชัน renderDashboard ให้ดึงข้อมูลตามลำดับที่บันทึกไว้
-function renderDashboard(groupItems) {
-    const container = document.getElementById('dashboard');
-    container.innerHTML = '';
-    
-    for (let g = 1; g <= totalGroups; g++) {
-        // ... (โค้ดสร้าง groupDiv เหมือนเดิม) ...
-        
-        // ตรวจสอบว่ามีลำดับที่เคยบันทึกไว้ใน localStorage ไหม
-        let savedOrder = groupOrder[g];
-        if (savedOrder) {
-            // เรียงลำดับบล็อกตาม savedOrder ที่เป็น Array ของ ID
-            savedOrder.forEach(id => {
-                const item = sheetData.find(d => d.id === id); // ต้องเก็บ sheetData เป็น global
-                if (item) contentDiv.appendChild(createBlock(item.id));
-            });
-        } else {
-            // ถ้าไม่มี ให้เรียงตาม Google Sheets ปกติ
-            groupItems[g].forEach(item => {
-                contentDiv.appendChild(createBlock(item.id));
-            });
-        }
-
-        // 3. เพิ่ม Event 'onUpdate' ใน SortableJS เพื่อบันทึกตำแหน่งทุกครั้งที่ลากวาง
-        new Sortable(contentDiv, {
-            group: 'shared',
-            animation: 150,
-            onEnd: function () {
-                // วนลูปเก็บ ID ของบล็อกในทุกกลุ่มใหม่ทั้งหมด
-                for (let i = 1; i <= totalGroups; i++) {
-                    const el = document.getElementById(`group-${i}`);
-                    groupOrder[i] = Array.from(el.children).map(child => child.id);
-                }
-                // บันทึกลงเครื่อง
-                localStorage.setItem('groupOrder', JSON.stringify(groupOrder));
-            }
-        });
-    }
-}
-
-    
 </script>
 </body>
 </html>
