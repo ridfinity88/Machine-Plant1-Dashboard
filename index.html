@@ -129,26 +129,48 @@
         <!-- RIGHT PANEL -->
         <div class="right-panel">
             <!-- ③ STATUS RATIO (2 กราฟวงกลม) -->
-            <div class="card p-4">
-                <span class="label-tag">③ STATUS RATIO</span>
-                <div class="flex flex-col w-full h-full mt-6 space-y-2">
-                    <div class="flex-1 min-h-0"><canvas id="pieChart1"></canvas></div>
-                    <div class="flex-1 min-h-0"><canvas id="pieChart2"></canvas></div>
-                </div>
-                <div class="mt-1 text-center">
-                    <div class="text-[10px] text-slate-500 uppercase">Efficiency</div>
-                    <div id="eff-val" class="text-xl font-black text-green-400">--%</div>
+            <!-- ③ STATUS RATIO -->
+<div class="card p-4">
+    <span class="label-tag">③ STATUS RATIO</span>
+    
+    <div class="flex flex-col w-full h-full mt-6 space-y-4">
+        
+        <!-- กราฟที่ 1 -->
+        <div class="flex items-center w-full h-1/2">
+            <!-- ซ้าย: กราฟวงกลมพร้อมตัวเลขกลางวง -->
+            <div class="relative w-24 h-24 flex-shrink-0">
+                <canvas id="pieChart1"></canvas>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span id="eff-val-1" class="text-sm font-bold text-green-400">85%</span>
                 </div>
             </div>
-
-            <!-- ④ PRODUCTION (4 เส้น) -->
-            <div class="card p-2">
-                <span class="label-tag">④ PRODUCTION</span>
-                <div class="w-full h-full pt-8">
-                    <canvas id="lineChart"></canvas>
-                </div>
+            <!-- ขวา: ข้อความ DATA -->
+            <div class="ml-4 flex flex-col text-[10px] space-y-1 text-slate-400">
+                <div class="flex items-center"><span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span> DATA1</div>
+                <div class="flex items-center"><span class="w-2 h-2 bg-slate-700 rounded-full mr-2"></span> DATA2</div>
+                <div class="flex items-center"><span class="w-2 h-2 bg-slate-800 rounded-full mr-2"></span> DATA3</div>
             </div>
         </div>
+
+        <!-- กราฟที่ 2 -->
+        <div class="flex items-center w-full h-1/2 border-t border-slate-800 pt-2">
+            <!-- ซ้าย: กราฟวงกลมพร้อมตัวเลขกลางวง -->
+            <div class="relative w-24 h-24 flex-shrink-0">
+                <canvas id="pieChart2"></canvas>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span id="eff-val-2" class="text-sm font-bold text-blue-400">60%</span>
+                </div>
+            </div>
+            <!-- ขวา: ข้อความ DATA -->
+            <div class="ml-4 flex flex-col text-[10px] space-y-1 text-slate-400">
+                <div class="flex items-center"><span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span> DATA1</div>
+                <div class="flex items-center"><span class="w-2 h-2 bg-slate-700 rounded-full mr-2"></span> DATA2</div>
+                <div class="flex items-center"><span class="w-2 h-2 bg-slate-800 rounded-full mr-2"></span> DATA3</div>
+            </div>
+        </div>
+
+    </div>
+</div>
 
     </main>
 
@@ -186,29 +208,23 @@
         });
 
         async function fetchData() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
-                let html = "";
-                data.table.forEach(item => {
-                    const statusColor = item.status === 'Running' ? 'text-green-400' : 'text-amber-400';
-                    html += `<tr class="border-b border-slate-800/50">
-                        <td class="py-2 font-bold text-slate-400">${item.machine}</td>
-                        <td class="py-2 text-lg text-center text-blue-400 font-bold">${item.temp}</td>
-                        <td class="py-2 text-lg text-center text-emerald-400 font-bold">${item.pressure}</td>
-                        <td class="py-2 text-right font-bold ${statusColor}">${item.status.charAt(0)}</td>
-                    </tr>`;
-                });
-                document.getElementById('data-table').innerHTML = html;
-                document.getElementById('eff-val').innerText = data.machine1.temp + "%";
-                
-                // อัปเดตกราฟวงกลมที่ 1 (ตัวอย่าง)
-                pieChart1.data.datasets[0].data = [data.machine1.temp, 100 - data.machine1.temp];
-                pieChart1.update();
-            } catch (e) { console.error(e); }
-        }
-        fetchData();
-        setInterval(fetchData, 10000);
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        
+        // ... (ส่วนการสร้าง table คงเดิม) ...
+
+        // อัปเดตตัวเลขกลางวง
+        document.getElementById('eff-val-1').innerText = data.machine1.temp + "%";
+        // สำหรับกราฟ 2 (สมมติใช้ค่าจากส่วนอื่นใน data)
+        document.getElementById('eff-val-2').innerText = "60%"; 
+        
+        // อัปเดตกราฟ
+        pieChart1.data.datasets[0].data = [data.machine1.temp, 100 - data.machine1.temp];
+        pieChart1.update();
+        
+    } catch (e) { console.error(e); }
+}
     </script>
 </body>
 </html>
