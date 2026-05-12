@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personnel Monitoring Dashboard Pro (Persistent Draggable)</title>
-    <!-- SortableJS Library -->
+    <title>Personnel Monitoring Dashboard Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -34,10 +33,11 @@
             text-transform: uppercase; letter-spacing: 2px;
         }
 
+        /* ปรับตำแหน่ง Watermark มาแทนที่ปุ่ม Reset */
         .watermark {
-            position: absolute; bottom: 20px; left: 50%;
-            transform: translateX(-50%); font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.2); z-index: 5;
+            position: absolute; top: 15px; right: 20px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.3); z-index: 10;
             pointer-events: none; letter-spacing: 3px;
         }
 
@@ -47,12 +47,6 @@
             padding: 5px 10px; font-size: 0.8rem;
         }
 
-        .header-controls { position: absolute; top: 10px; right: 15px; z-index: 10; }
-        .btn-reset-main {
-            background: #444; color: #ccc; border: 1px solid #555;
-            padding: 5px 10px; cursor: pointer; font-size: 0.8rem;
-        }
-
         .dashboard {
             display: grid;
             grid-template-columns: repeat(5, 1fr); 
@@ -60,50 +54,20 @@
             gap: 10px; width: 100%; margin-top: 40px;
         }
 
-        .group-container {
-            border: 1px solid #333; background: #1a1a1a; padding: 5px;
-            display: flex; flex-direction: column; border-radius: 4px; position: relative;
-        }
-
-        .group-header {
-            font-size: 0.75rem; font-weight: bold; margin-bottom: 5px;
-            border-bottom: 1px solid #333; padding-bottom: 2px; color: #aaa;
-            display: flex; justify-content: center; align-items: center;
-            text-transform: uppercase;
-        }
-
-        .group-content {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: minmax(30px, auto); gap: 3px;
-            flex-grow: 1; align-content: start; min-height: 80px; overflow-y: auto;
-        }
-
+        /* ... CSS ส่วนอื่นๆ คงเดิมตามโค้ดของคุณ ... */
+        .group-container { border: 1px solid #333; background: #1a1a1a; padding: 5px; display: flex; flex-direction: column; border-radius: 4px; position: relative; }
+        .group-header { font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px; color: #aaa; display: flex; justify-content: center; align-items: center; text-transform: uppercase; }
+        .group-content { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(30px, auto); gap: 3px; flex-grow: 1; align-content: start; min-height: 80px; overflow-y: auto; }
         .sortable-ghost { opacity: 0.2; background: var(--accent-blue) !important; }
         .sortable-chosen { border: 1px solid var(--accent-blue); }
-
-        .block {
-            background-color: var(--card-gray); display: flex; align-items: center;
-            justify-content: center; font-size: 0.6rem; cursor: grab;
-            text-align: center; padding: 2px; border-radius: 2px; user-select: none;
-            position: relative; gap: 2px; min-height: 30px;
-        }
+        .block { background-color: var(--card-gray); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; cursor: grab; text-align: center; padding: 2px; border-radius: 2px; user-select: none; position: relative; gap: 2px; min-height: 30px; }
         .block:active { cursor: grabbing; }
-
-        .block.leader {
-            grid-column: span 2; grid-row: span 2;
-            font-size: 0.8rem; font-weight: bold; min-height: 65px;
-        }
-
+        .block.leader { grid-column: span 2; grid-row: span 2; font-size: 0.8rem; font-weight: bold; min-height: 65px; }
         .status-green { background-color: var(--card-green) !important; }
         .status-red { background-color: var(--card-red) !important; }
         .status-yellow { background-color: var(--card-yellow) !important; color: #000; }
-
-        #modalOverlay, #authOverlay, #confirmOverlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 100;
-        }
+        #modalOverlay, #authOverlay, #confirmOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 100; }
         .modal { background: #222; padding: 20px; border-radius: 8px; width: 320px; border: 1px solid #444; position: relative; }
-        
         .delete-btn-corner { position: absolute; top: 10px; left: 10px; color: var(--card-red); cursor: pointer; font-size: 1.2rem; }
         .option-row { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
         select { padding: 4px; background: #333; color: white; border: 1px solid #555; border-radius: 3px; }
@@ -117,46 +81,22 @@
 <body>
 
 <div class="main-title">Machine Plant1 Dashboard</div>
+<!-- ย้ายลายน้ำขึ้นมาไว้ด้านบน -->
 <div class="watermark">Created By RiDFinity</div>
 <div class="live-clock" id="liveClock">กำลังโหลด...</div>
-<div class="header-controls">
-    <button class="btn-reset-main" onclick="manualReset()">RESET STATUS</button>
-</div>
 
 <div class="dashboard" id="dashboard">
     <div class="loading-text">กำลังดึงข้อมูลจาก Google Sheets...</div>
 </div>
 
-<div id="authOverlay">
-    <div class="modal">
-        <h3 style="text-align: center;">กรุณาใส่รหัสผ่าน</h3>
-        <input type="password" id="mainPass" oninput="checkAuthBtn(this, 'authBtn')">
-        <button id="authBtn" class="btn-action btn-blue" style="display:none;" onclick="unlockApp()">เข้าสู่ระบบ</button>
-    </div>
-</div>
-
-<div id="modalOverlay">
-    <div class="modal">
-        <div class="delete-btn-corner" onclick="askDelete()">🗑️</div>
-        <h3 style="margin-top:0; color: var(--accent-blue); text-align: center;" id="modalTitle"></h3>
-        <div class="option-row"><span>1. ใช้งานได้</span><select id="opt1" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div>
-        <div class="option-row"><span>2. น็อตครบ</span><select id="opt2" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div>
-        <div class="option-row"><span>3. สะอาด</span><select id="opt3" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div>
-        <button id="saveBtn" class="btn-action btn-blue" style="display:none;" onclick="saveStatus()">บันทึก</button>
-        <button onclick="closeModal()" style="margin-top: 10px; width: 100%; background: none; color: #aaa; border: none; cursor: pointer;">ปิดหน้าต่าง</button>
-    </div>
-</div>
-
-<div id="confirmOverlay">
-    <div class="modal" style="text-align: center;">
-        <h3>ยืนยันการลบ?</h3>
-        <p>บล็อกนี้จะถูกซ่อนไว้จนกว่าจะมีการรีโหลดข้อมูลใหม่</p>
-        <button class="btn-action btn-danger" onclick="confirmDelete()">ใช่, ลบเลย</button>
-        <button onclick="document.getElementById('confirmOverlay').style.display='none'" style="margin-top: 10px; width: 100%; background: none; color: #aaa; border: none; cursor: pointer;">ยกเลิก</button>
-    </div>
-</div>
+<!-- ... ส่วนของ Modal คงเดิม ... -->
+<div id="authOverlay"><div class="modal"><h3 style="text-align: center;">กรุณาใส่รหัสผ่าน</h3><input type="password" id="mainPass" oninput="checkAuthBtn(this, 'authBtn')"><button id="authBtn" class="btn-action btn-blue" style="display:none;" onclick="unlockApp()">เข้าสู่ระบบ</button></div></div>
+<div id="modalOverlay"><div class="modal"><div class="delete-btn-corner" onclick="askDelete()">🗑️</div><h3 style="margin-top:0; color: var(--accent-blue); text-align: center;" id="modalTitle"></h3><div class="option-row"><span>1. ใช้งานได้</span><select id="opt1" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div><div class="option-row"><span>2. น็อตครบ</span><select id="opt2" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div><div class="option-row"><span>3. สะอาด</span><select id="opt3" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div><button id="saveBtn" class="btn-action btn-blue" style="display:none;" onclick="saveStatus()">บันทึก</button><button onclick="closeModal()" style="margin-top: 10px; width: 100%; background: none; color: #aaa; border: none; cursor: pointer;">ปิดหน้าต่าง</button></div></div>
+<div id="confirmOverlay"><div class="modal" style="text-align: center;"><h3>ยืนยันการลบ?</h3><p>บล็อกนี้จะถูกซ่อนไว้จนกว่าจะมีการรีโหลดข้อมูลใหม่</p><button class="btn-action btn-danger" onclick="confirmDelete()">ใช่, ลบเลย</button><button onclick="document.getElementById('confirmOverlay').style.display='none'" style="margin-top: 10px; width: 100%; background: none; color: #aaa; border: none; cursor: pointer;">ยกเลิก</button></div></div>
 
 <script>
+    // ส่วน Script คงเดิมทั้งหมด ยกเว้นฟังก์ชัน manualReset ที่คุณสามารถลบออกหรือเก็บไว้ก็ได้ 
+    // (แต่เมื่อลบปุ่มออกแล้ว ฟังก์ชันนี้จะไม่มีการเรียกใช้งานจากหน้าเว็บ)
     const MASTER_KEY = "cpram2026";
     const totalGroups = 15;
     const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwM34-rCON0BpTTpvp3u0_-33anp06OGKPxSrOGdszin118SuWIyhT7H7K5LzSQsW8BWg/exec";
@@ -179,9 +119,7 @@
         try {
             const response = await fetch(SHEET_API_URL);
             rawSheetData = await response.json();
-            
             if (rawSheetData && rawSheetData.length > 0) {
-                // เก็บข้อมูลพื้นฐาน
                 rawSheetData.forEach(item => {
                     nameMap[item.id] = item.name;
                     leaderStatusMap[item.id] = item.isLeader;
@@ -197,27 +135,17 @@
     function renderDashboard() {
         const container = document.getElementById('dashboard');
         container.innerHTML = '';
-        
-        // เตรียมโครงสร้างข้อมูลกลุ่ม
         const groupContents = {};
         for (let i = 1; i <= totalGroups; i++) groupContents[i] = [];
-
-        // ตรวจสอบข้อมูลจาก Sheet ว่าตัวไหน "ยังไม่มีที่อยู่" (เป็นข้อมูลใหม่)
         const placedIds = new Set();
         Object.values(groupOrder).forEach(ids => ids.forEach(id => placedIds.add(id)));
-
-        // 1. ใส่ตัวที่เคยบันทึกตำแหน่งไว้แล้ว
         for (let g = 1; g <= totalGroups; g++) {
             if (groupOrder[g]) {
                 groupOrder[g].forEach(id => {
-                    if (nameMap[id]) { // ตรวจสอบว่า ID นั้นยังอยู่ใน Sheet หรือไม่
-                        groupContents[g].push(id);
-                    }
+                    if (nameMap[id]) groupContents[g].push(id);
                 });
             }
         }
-
-        // 2. ถ้ามีข้อมูลใหม่ใน Sheet ที่ยังไม่เคยถูกจัดตำแหน่ง ให้แจกจ่ายตามลำดับกลุ่มปกติ
         rawSheetData.forEach((item, index) => {
             if (!placedIds.has(item.id.toString()) && !placedIds.has(item.id)) {
                 let targetG = (index % totalGroups) + 1;
@@ -225,31 +153,25 @@
             }
         });
 
-        // สร้าง HTML
         for (let g = 1; g <= totalGroups; g++) {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-container';
             const gName = FIXED_GROUP_NAMES[g] || `กลุ่มที่ ${g}`;
             groupDiv.innerHTML = `<div class="group-header"><span>${gName}</span></div>`;
-            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'group-content';
             contentDiv.id = `group-${g}`;
-
             groupContents[g].forEach(id => {
                 contentDiv.appendChild(createBlock(id));
             });
-            
             groupDiv.appendChild(contentDiv);
             container.appendChild(groupDiv);
-
-            // เปิดใช้งาน SortableJS และตั้งค่าให้บันทึกเมื่อขยับ
             new Sortable(contentDiv, {
                 group: 'shared',
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
-                onEnd: saveAllOrders // เรียกฟังก์ชันบันทึกตำแหน่งทุกครั้งที่วาง
+                onEnd: saveAllOrders 
             });
         }
     }
@@ -258,9 +180,7 @@
         const newOrder = {};
         for (let i = 1; i <= totalGroups; i++) {
             const el = document.getElementById(`group-${i}`);
-            if (el) {
-                newOrder[i] = Array.from(el.children).map(child => child.id);
-            }
+            if (el) newOrder[i] = Array.from(el.children).map(child => child.id);
         }
         groupOrder = newOrder;
         localStorage.setItem('groupOrder', JSON.stringify(groupOrder));
@@ -272,11 +192,7 @@
         div.className = `block ${isLeader ? 'leader' : ''}`;
         div.id = id;
         div.innerText = nameMap[id] || "N/A";
-        
-        div.onclick = (e) => {
-            if (e.target === div) openModal(id);
-        };
-        
+        div.onclick = (e) => { if (e.target === div) openModal(id); };
         if (appData[id]) applyColor(div, appData[id]);
         return div;
     }
@@ -323,11 +239,12 @@
     function confirmDelete() {
         const el = document.getElementById(currentTargetId);
         if(el) el.remove();
-        saveAllOrders(); // บันทึกตำแหน่งหลังลบออก
+        saveAllOrders();
         document.getElementById('confirmOverlay').style.display = 'none';
         closeModal();
     }
 
+    // ลบ manualReset ออกไปเลยก็ได้ครับ หรือปล่อยไว้ก็ได้
     function manualReset() {
         if (prompt("รหัสผ่าน RESET ข้อมูลทั้งหมด (รวมตำแหน่ง):") === MASTER_KEY) {
             localStorage.removeItem('heatmapData');
