@@ -324,6 +324,51 @@
             document.getElementById('liveClock').innerText = new Date().toLocaleString('th-TH');
         }, 1000);
     };
+
+// 1. เพิ่มตัวแปรสำหรับเก็บลำดับกลุ่ม
+let groupOrder = JSON.parse(localStorage.getItem('groupOrder')) || {};
+
+// 2. ปรับฟังก์ชัน renderDashboard ให้ดึงข้อมูลตามลำดับที่บันทึกไว้
+function renderDashboard(groupItems) {
+    const container = document.getElementById('dashboard');
+    container.innerHTML = '';
+    
+    for (let g = 1; g <= totalGroups; g++) {
+        // ... (โค้ดสร้าง groupDiv เหมือนเดิม) ...
+        
+        // ตรวจสอบว่ามีลำดับที่เคยบันทึกไว้ใน localStorage ไหม
+        let savedOrder = groupOrder[g];
+        if (savedOrder) {
+            // เรียงลำดับบล็อกตาม savedOrder ที่เป็น Array ของ ID
+            savedOrder.forEach(id => {
+                const item = sheetData.find(d => d.id === id); // ต้องเก็บ sheetData เป็น global
+                if (item) contentDiv.appendChild(createBlock(item.id));
+            });
+        } else {
+            // ถ้าไม่มี ให้เรียงตาม Google Sheets ปกติ
+            groupItems[g].forEach(item => {
+                contentDiv.appendChild(createBlock(item.id));
+            });
+        }
+
+        // 3. เพิ่ม Event 'onUpdate' ใน SortableJS เพื่อบันทึกตำแหน่งทุกครั้งที่ลากวาง
+        new Sortable(contentDiv, {
+            group: 'shared',
+            animation: 150,
+            onEnd: function () {
+                // วนลูปเก็บ ID ของบล็อกในทุกกลุ่มใหม่ทั้งหมด
+                for (let i = 1; i <= totalGroups; i++) {
+                    const el = document.getElementById(`group-${i}`);
+                    groupOrder[i] = Array.from(el.children).map(child => child.id);
+                }
+                // บันทึกลงเครื่อง
+                localStorage.setItem('groupOrder', JSON.stringify(groupOrder));
+            }
+        });
+    }
+}
+
+    
 </script>
 </body>
 </html>
