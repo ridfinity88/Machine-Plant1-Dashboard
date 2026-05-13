@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personnel Monitoring Dashboard Pro (A1-A2 Layout)</title>
+    <title>Personnel Monitoring Dashboard Pro (A1-A2 Side-by-Side)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -23,22 +23,22 @@
         .live-clock { position: absolute; top: 10px; left: 15px; z-index: 10; background: #444; color: #ccc; border: 1px solid #555; padding: 5px 10px; font-size: 0.8rem; }
 
         /* ============================================================
-           Layout Management: แบ่งครึ่งแนวตั้งสำหรับ A1 และ A2
+           Layout Management: แบ่งช่องแนวตั้ง (ซ้าย-ขวา) สำหรับ A1 และ A2
            ============================================================ */
         .dashboard { 
             display: grid; 
             width: 100%; 
-            height: calc(100vh - 60px);
-            margin-top: 45px;
+            height: calc(100vh - 65px);
+            margin-top: 50px;
             gap: 10px; 
-            grid-template-columns: repeat(6, 1fr);
-            grid-auto-rows: minmax(100px, 1fr);
+            /* เพิ่มจำนวน column เป็น 8 เพื่อให้แบ่งครึ่งช่อง g14 และ g15 ได้สวยงาม */
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(3, 1fr);
             
             grid-template-areas: 
-                "g1 g1 g1 g2 g3 g4"
-                "g5 g5 g6 g7 g8 g9"
-                "g10 g11 g12 g13 g14a g15a"
-                "g10 g11 g12 g13 g14b g15b";
+                "g1 g1 g1 g2 g3 g4 g4 g4"
+                "g5 g5 g6 g7 g8 g9 g9 g9"
+                "g10 g11 g12 g13 g14 a1 g15 a2"; /* แบ่งช่อง g14 กับ a1 และ g15 กับ a2 ไว้ข้างกัน */
         }
 
         /* ผูก ID กลุ่มเข้ากับ Grid Area */
@@ -56,21 +56,21 @@
         #container-12 { grid-area: g12; }
         #container-13 { grid-area: g13; }
         
-        /* แบ่งครึ่งแนวตั้ง */
-        #container-14 { grid-area: g14a; } /* ห้องกล่อง */
-        #container-16 { grid-area: g14b; } /* A1 (ใต้ห้องกล่อง) */
-        #container-15 { grid-area: g15a; } /* ห้องเบอร์เกอร์ */
-        #container-17 { grid-area: g15b; } /* A2 (ใต้ห้องเบอร์เกอร์) */
+        /* ช่องที่แบ่งครึ่งแนวตั้ง (อยู่ข้างกัน) */
+        #container-14 { grid-area: g14; } /* ห้องกล่อง */
+        #container-16 { grid-area: a1; }  /* A1 (ขวาของห้องกล่อง) */
+        #container-15 { grid-area: g15; } /* ห้องเบอร์เกอร์ */
+        #container-17 { grid-area: a2; }  /* A2 (ขวาของห้องเบอร์เกอร์) */
 
         /* ============================================================ */
 
         .group-container { border: 1px solid #333; background: #1a1a1a; padding: 5px; display: flex; flex-direction: column; border-radius: 4px; overflow: hidden; }
-        .group-header { font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px; color: #aaa; display: flex; justify-content: center; align-items: center; text-transform: uppercase; }
+        .group-header { font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 2px; color: #aaa; text-align: center; white-space: nowrap; }
         
         .group-content { 
             display: grid; 
-            grid-template-columns: repeat(8, 1fr); 
-            grid-auto-rows: minmax(30px, auto); 
+            grid-template-columns: repeat(4, 1fr); /* ปรับให้เหมาะสมกับช่องที่แคบลง */
+            grid-auto-rows: minmax(32px, auto); 
             gap: 3px; 
             flex-grow: 1; 
             align-content: start; 
@@ -88,17 +88,16 @@
             padding: 2px; 
             border-radius: 2px; 
             user-select: none; 
-            position: relative; 
-            min-height: 30px; 
             grid-column: span 2; 
+            min-height: 32px; 
         }
 
         .block.leader { 
             grid-column: span 2; 
             grid-row: span 2; 
-            font-size: 0.8rem; 
+            font-size: 0.75rem; 
             font-weight: bold; 
-            min-height: 65px; 
+            min-height: 68px; 
         }
 
         .status-green { background-color: var(--card-green) !important; color: white; }
@@ -119,9 +118,7 @@
 <div class="watermark">Created By RiDFinity</div>
 <div class="live-clock" id="liveClock">กำลังโหลด...</div>
 
-<div class="dashboard" id="dashboard">
-    <!-- กลุ่มจะถูกสร้างโดย JavaScript -->
-</div>
+<div class="dashboard" id="dashboard"></div>
 
 <div id="authOverlay">
     <div class="modal">
@@ -133,7 +130,6 @@
 
 <script>
     const MASTER_KEY = "cpram2026";
-    // เพิ่มเป็น 17 กลุ่ม (1-15 เดิม + A1, A2)
     const totalGroups = 17;
     const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxnJHrkUy5YuQ7rk37Dm0aT9nhlx4CuLn0g2y0NmRW6i9yPwJLZJXSJqB0UvFPUvQu1vA/exec";
 
@@ -142,7 +138,7 @@
         5: "PACK A", 6: "ห้องย่างไก่", 7: "COOK2", 8: "ห้องล้าง สุก&ดิบ", 
         9: "ห้องผสมไส้", 10: "ห้องเนื้อ", 11: "ห้องผัก", 12: "SEASONING", 
         13: "READY MEAL", 14: "ห้องกล่อง", 15: "ห้องเบอร์เกอร์",
-        16: "A1", 17: "A2" // กลุ่มใหม่ที่แบ่งมา
+        16: "A1", 17: "A2" 
     };
 
     let rawSheetData = [];
@@ -154,14 +150,12 @@
             renderDashboard();
         } catch (error) {
             console.error("Fetch Error:", error);
-            document.getElementById('dashboard').innerHTML = `<div style="color:red; text-align:center; grid-column: 1/-1;">เกิดข้อผิดพลาดในการเชื่อมต่อข้อมูล</div>`;
         }
     }
 
     function renderDashboard() {
         const container = document.getElementById('dashboard');
         container.innerHTML = '';
-        
         const groupContents = {};
         for (let i = 1; i <= totalGroups; i++) groupContents[i] = [];
 
@@ -180,7 +174,7 @@
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-container';
             groupDiv.id = `container-${g}`;
-            groupDiv.innerHTML = `<div class="group-header"><span>${FIXED_GROUP_NAMES[g]}</span></div>`;
+            groupDiv.innerHTML = `<div class="group-header">${FIXED_GROUP_NAMES[g]}</div>`;
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'group-content';
@@ -226,7 +220,7 @@
                 mode: "no-cors",
                 body: JSON.stringify({ rowIndex: rowIndex, newGroupName: newGroupName })
             });
-        } catch (e) { console.error("Update Error:", e); }
+        } catch (e) { console.error(e); }
     }
 
     function createBlock(item) {
