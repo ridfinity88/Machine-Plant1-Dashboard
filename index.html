@@ -3,10 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personnel Monitoring Dashboard (Layout S__62046214)</title>
+    <title>Personnel Monitoring Dashboard (Equal Layout)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
+            /* ==========================================
+               จุดปรับแต่งขนาด (CONFIG AREA)
+               ========================================== */
+            --row-height: 33.33vh;      /* ความสูงต่อ 1 แถว (จอมี 3 แถวหลัก รวมเป็น 100%) */
+            --col-width: 12.5%;         /* ความกว้างต่อ 1 คอลัมน์ (จอมี 8 คอลัมน์หลัก รวมเป็น 100%) */
+            
+            --block-min-height: 25px;   /* [Box เล็ก] ความสูงชื่อพนักงาน */
+            --leader-min-height: 52px;  /* [Box ใหญ่] ความสูงช่องหัวหน้า */
+            
+            --dashboard-gap: 8px;       /* ระยะห่างระหว่างกลุ่ม */
+            
+            /* สีและสไตล์ */
             --bg-color: #000;
             --card-gray: #424242;
             --card-green: #2e7d32;
@@ -15,26 +27,35 @@
             --text-color: #fff;
             --accent-blue: #2196F3;
         }
-        * { box-sizing: border-box; }
-        html, body { background-color: var(--bg-color); color: var(--text-color); font-family: sans-serif; margin: 0; padding: 10px; width: 100vw; height: 100vh; overflow: hidden; position: relative; }
-        
-        .main-title { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 1.2rem; font-weight: bold; color: #ccc; z-index: 5; text-transform: uppercase; letter-spacing: 2px; }
-        .watermark { position: absolute; bottom: 5px; right: 10px; font-size: 0.6rem; color: rgba(255, 255, 255, 0.2); z-index: 10; pointer-events: none; }
-        .live-clock { position: absolute; top: 10px; left: 15px; z-index: 10; background: #333; color: #ccc; border: 1px solid #444; padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; }
 
-        /* ============================================================
-           Layout Management: อ้างอิงตามรูป S__62046214.jpg
-           ============================================================ */
+        * { box-sizing: border-box; }
+        html, body { 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: sans-serif; 
+            margin: 0; padding: 0; 
+            width: 100vw; height: 100vh; 
+            overflow: hidden; 
+        }
+        
+        .main-title { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; font-weight: bold; color: #ccc; z-index: 5; text-transform: uppercase; }
+        .live-clock { position: absolute; top: 5px; left: 10px; z-index: 10; background: #333; padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; }
+        .watermark { position: absolute; bottom: 5px; right: 10px; font-size: 0.6rem; color: rgba(255, 255, 255, 0.2); }
+
+        /* ==========================================
+           Layout Management (Grid 8x3)
+           ========================================== */
         .dashboard { 
             display: grid; 
-            width: 100%; 
-            height: calc(100vh - 50px);
-            margin-top: 40px;
-            gap: 8px; 
-            /* แบ่งเป็น 8 คอลัมน์หลัก */
+            width: 100vw; 
+            height: 100vh;
+            padding: 40px 10px 10px 10px; /* เว้นที่ว่างด้านบนให้ Title */
+            gap: var(--dashboard-gap);
+            
+            /* แบ่ง 8 คอลัมน์เท่ากัน */
             grid-template-columns: repeat(8, 1fr);
-            /* แบ่งเป็น 3 แถวหลัก (แถวบนสูงกว่าแถวล่าง) */
-            grid-template-rows: 0.5fr 0.5fr 0.4fr;
+            /* แบ่ง 3 แถวสูงเท่ากันทั้งหมด (รวม 100%) */
+            grid-template-rows: repeat(3, 1fr);
             
             grid-template-areas: 
                 "g1 g1 g2 g2 g3 g3 g4 g5"
@@ -42,7 +63,7 @@
                 "g8 g9 g10 g11 g12 g13 g14 g15";
         }
 
-        /* แมพ ID เข้ากับพื้นที่ Grid */
+        /* แมพ Container เข้ากับพื้นที่ */
         #container-1 { grid-area: g1; }
         #container-2 { grid-area: g2; }
         #container-3 { grid-area: g3; }
@@ -58,23 +79,39 @@
         #container-13 { grid-area: g13; }
         #container-14 { grid-area: g14; }
         #container-15 { grid-area: g15; }
-        /* กลุ่ม A1, A2 (16,17) ถูกซ่อนไว้ไม่ให้รบกวน Layout หลักตามรูป */
         #container-16, #container-17 { display: none; }
 
-        .group-container { border: 1px solid #333; background: #111; padding: 4px; display: flex; flex-direction: column; border-radius: 4px; overflow: hidden; }
-        .group-header { font-size: 0.65rem; font-weight: bold; margin-bottom: 4px; border-bottom: 1px solid #222; padding-bottom: 2px; color: #888; text-align: center; }
+        .group-container { 
+            border: 1px solid #333; 
+            background: #111; 
+            padding: 5px; 
+            display: flex; 
+            flex-direction: column; 
+            border-radius: 4px; 
+            overflow: hidden; 
+        }
+
+        .group-header { 
+            font-size: 0.65rem; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            border-bottom: 1px solid #222; 
+            padding-bottom: 2px; 
+            color: #aaa; 
+            text-align: center; 
+        }
         
         .group-content { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
-            grid-auto-rows: minmax(28px, auto); 
+            grid-auto-rows: minmax(var(--block-min-height), auto); 
             gap: 2px; 
             flex-grow: 1; 
             align-content: start; 
-            overflow-y: auto; 
+            overflow-y: auto; /* หากคนล้นกลุ่ม จะ scroll เฉพาะในกลุ่มนั้น ไม่ทำให้จอด้านนอกเลื่อน */
         }
 
-        /* ปรับสเกล Block ให้เล็กลงเพื่อรองรับจำนวนกลุ่มที่มากขึ้น */
+        /* [Box เล็ก] */
         .block { 
             background-color: var(--card-gray); 
             display: flex; 
@@ -82,56 +119,53 @@
             justify-content: center; 
             font-size: 0.55rem; 
             cursor: grab; 
-            text-align: center; 
-            padding: 1px; 
+            padding: 2px; 
             border-radius: 2px; 
-            user-select: none; 
             grid-column: span 2; 
-            min-height: 28px; 
+            min-height: var(--block-min-height); 
         }
 
+        /* [Box ใหญ่] */
         .block.leader { 
             grid-column: span 2; 
             grid-row: span 2; 
-            font-size: 0.65rem; 
+            font-size: 0.6rem; 
             font-weight: bold; 
-            min-height: 58px; 
+            min-height: var(--leader-min-height); 
             border: 1px solid rgba(255,255,255,0.2);
         }
 
-        .status-green { background-color: var(--card-green) !important; color: white; }
-        .status-red { background-color: var(--card-red) !important; color: white; }
+        /* สไตล์อื่นๆ */
+        .status-green { background-color: var(--card-green) !important; }
+        .status-red { background-color: var(--card-red) !important; }
         .status-yellow { background-color: var(--card-yellow) !important; color: #000 !important; }
         .status-unknown { background-color: #fff !important; color: #000 !important; }
 
         #authOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; z-index: 100; }
-        .modal { background: #222; padding: 25px; border-radius: 8px; width: 300px; border: 1px solid #444; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .btn-action { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-blue { background: var(--accent-blue); color: white; }
-        input[type="password"] { width: 100%; padding: 10px; margin: 10px 0; background: #333; border: 1px solid #555; color: white; text-align: center; border-radius: 4px; }
+        .modal { background: #222; padding: 25px; border-radius: 8px; width: 300px; text-align: center; border: 1px solid #444; }
+        .btn-action { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; background: var(--accent-blue); color: white; }
+        input[type="password"] { width: 100%; padding: 10px; margin: 10px 0; background: #333; border: 1px solid #555; color: white; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="main-title">Machine Plant1 Dashboard</div>
-<div class="watermark">RiDFinity Design</div>
 <div class="live-clock" id="liveClock">...</div>
+<div class="watermark">RiDFinity Design</div>
 
-<div class="dashboard" id="dashboard">
-    <!-- จาวาสคริปต์จะสร้างกลุ่ม g1 - g17 ที่นี่ -->
-</div>
+<div class="dashboard" id="dashboard"></div>
 
 <div id="authOverlay">
     <div class="modal">
-        <h3 style="text-align: center; margin-top: 0;">Access Required</h3>
+        <h3>Access Required</h3>
         <input type="password" id="mainPass" placeholder="Enter Password" oninput="checkAuthBtn(this, 'authBtn')">
-        <button id="authBtn" class="btn-action btn-blue" style="display:none;" onclick="unlockApp()">LOGIN</button>
+        <button id="authBtn" class="btn-action" style="display:none;" onclick="unlockApp()">LOGIN</button>
     </div>
 </div>
 
 <script>
     const MASTER_KEY = "cpram2026";
-    const totalGroups = 17; // g1-g15 ตามรูป + g16-g17 ที่เตรียมไว้
+    const totalGroups = 17;
     const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxnJHrkUy5YuQ7rk37Dm0aT9nhlx4CuLn0g2y0NmRW6i9yPwJLZJXSJqB0UvFPUvQu1vA/exec";
 
     const FIXED_GROUP_NAMES = { 
@@ -149,9 +183,7 @@
             const response = await fetch(SHEET_API_URL);
             rawSheetData = await response.json();
             renderDashboard();
-        } catch (error) {
-            console.error("Fetch Error:", error);
-        }
+        } catch (error) { console.error("Fetch Error:", error); }
     }
 
     function renderDashboard() {
@@ -163,9 +195,8 @@
         rawSheetData.forEach(item => {
             let assignedGroupName = (item.latestGroup || item.initialGroup || "").trim();
             let groupId = findGroupIdByName(assignedGroupName);
-            if (groupId) {
-                groupContents[groupId].push(item);
-            } else {
+            if (groupId) groupContents[groupId].push(item);
+            else {
                 item.isUnknownGroup = true;
                 groupContents[1].push(item); 
             }
@@ -182,10 +213,7 @@
             contentDiv.id = `group-${g}`;
             contentDiv.dataset.name = FIXED_GROUP_NAMES[g];
 
-            groupContents[g].forEach(item => {
-                contentDiv.appendChild(createBlock(item));
-            });
-
+            groupContents[g].forEach(item => contentDiv.appendChild(createBlock(item)));
             groupDiv.appendChild(contentDiv);
             container.appendChild(groupDiv);
 
@@ -219,7 +247,7 @@
             await fetch(SHEET_API_URL, {
                 method: "POST",
                 mode: "no-cors",
-                body: JSON.stringify({ rowIndex: rowIndex, newGroupName: newGroupName })
+                body: JSON.stringify({ rowIndex, newGroupName })
             });
         } catch (e) { console.error(e); }
     }
