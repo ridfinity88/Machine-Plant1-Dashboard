@@ -43,30 +43,27 @@
 
         /* Box ปกติ */
         .block { 
-            background-color: var(--card-gray); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 0.55rem; /* ลดขนาดฟอนต์เล็กน้อยเพื่อให้เหมาะกับ Box ที่แคบลง */
-            cursor: grab; 
-            text-align: center; 
-            padding: 2px; 
-            border-radius: 2px; 
-            user-select: none; 
-            position: relative; 
-            gap: 2px; 
-            min-height: 30px; 
-            grid-column: span 2; /* ให้ Box ปกติกิน 2 ส่วนจาก 8 (เท่ากับ 1 ใน 4 ของความกว้างเดิม) */
-        }
+        background-color: var(--card-gray); 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 0.55rem; 
+        cursor: grab; 
+        text-align: center; 
+        padding: 2px; 
+        border-radius: 2px; 
+        min-height: 30px; 
+        grid-column: span 2; /* บังคับแกน X */
+    }
 
-        /* จุดที่แก้ไข: ปรับ Leader ให้กินพื้นที่สมดุลกับ Grid ใหม่ */
-        .block.leader { 
-            grid-column: span 4; /* กิน 4 ส่วนจาก 8 เพื่อรักษาความกว้างเท่าเดิมเมื่อเทียบกับกลุ่ม */
-            grid-row: span 2; 
-            font-size: 0.8rem; 
-            font-weight: bold; 
-            min-height: 65px; 
-        }
+    /* 3. บังคับให้ Leader กิน 4 ช่อง (เท่ากับความกว้าง 2 Box ปกติ) แต่สูง 2 แถวเหมือนเดิม */
+    .block.leader { 
+        grid-column: span 4; /* แกน X ลดลงเหลือครึ่งหนึ่งของพื้นที่กลุ่ม */
+        grid-row: span 2;    /* แกน Y สูงเท่าเดิม */
+        font-size: 0.8rem; 
+        font-weight: bold; 
+        min-height: 63px;    /* ปรับให้พอดีกับ 2 แถว + gap */
+    }
 
         .status-green { background-color: var(--card-green) !important; }
         .status-red { background-color: var(--card-red) !important; }
