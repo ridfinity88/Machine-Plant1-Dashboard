@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personnel Monitoring Dashboard Pro (Custom Layout)</title>
+    <title>Personnel Monitoring Dashboard Pro (A1-A2 Layout)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -23,7 +23,7 @@
         .live-clock { position: absolute; top: 10px; left: 15px; z-index: 10; background: #444; color: #ccc; border: 1px solid #555; padding: 5px 10px; font-size: 0.8rem; }
 
         /* ============================================================
-           ส่วนการปรับตำแหน่งและขนาด (Layout Management)
+           Layout Management: แบ่งครึ่งแนวตั้งสำหรับ A1 และ A2
            ============================================================ */
         .dashboard { 
             display: grid; 
@@ -31,20 +31,14 @@
             height: calc(100vh - 60px);
             margin-top: 45px;
             gap: 10px; 
-            /* กำหนดจำนวน Column ทั้งหมด (เช่น 6 columns) */
             grid-template-columns: repeat(6, 1fr);
-            /* กำหนดความสูงของแต่ละแถวอัตโนมัติ */
             grid-auto-rows: minmax(100px, 1fr);
             
-            /* การวาง Layout: 
-               g1 = กลุ่ม 1, g2 = กลุ่ม 2 ... g15 = กลุ่ม 15
-               ถ้าอยากให้กลุ่มไหนกว้าง ให้พิมพ์ชื่อซ้ำกันในแนวนอน
-               ถ้าอยากให้กลุ่มไหนสูง ให้พิมพ์ชื่อซ้ำกันในแนวตั้ง
-            */
             grid-template-areas: 
                 "g1 g1 g1 g2 g3 g4"
                 "g5 g5 g6 g7 g8 g9"
-                "g10 g11 g12 g13 g14 g15";
+                "g10 g11 g12 g13 g14a g15a"
+                "g10 g11 g12 g13 g14b g15b";
         }
 
         /* ผูก ID กลุ่มเข้ากับ Grid Area */
@@ -61,8 +55,12 @@
         #container-11 { grid-area: g11; }
         #container-12 { grid-area: g12; }
         #container-13 { grid-area: g13; }
-        #container-14 { grid-area: g14; }
-        #container-15 { grid-area: g15; }
+        
+        /* แบ่งครึ่งแนวตั้ง */
+        #container-14 { grid-area: g14a; } /* ห้องกล่อง */
+        #container-16 { grid-area: g14b; } /* A1 (ใต้ห้องกล่อง) */
+        #container-15 { grid-area: g15a; } /* ห้องเบอร์เกอร์ */
+        #container-17 { grid-area: g15b; } /* A2 (ใต้ห้องเบอร์เกอร์) */
 
         /* ============================================================ */
 
@@ -113,7 +111,6 @@
         .btn-action { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-blue { background: var(--accent-blue); color: white; }
         input[type="password"] { width: 100%; padding: 10px; margin: 10px 0; background: #333; border: 1px solid #555; color: white; text-align: center; }
-        .loading-text { text-align: center; color: var(--accent-blue); margin-top: 50px; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -123,7 +120,7 @@
 <div class="live-clock" id="liveClock">กำลังโหลด...</div>
 
 <div class="dashboard" id="dashboard">
-    <!-- กลุ่มจะถูกสร้างโดย JavaScript ตาม Grid Area ที่กำหนดไว้ใน CSS -->
+    <!-- กลุ่มจะถูกสร้างโดย JavaScript -->
 </div>
 
 <div id="authOverlay">
@@ -136,11 +133,17 @@
 
 <script>
     const MASTER_KEY = "cpram2026";
-    const totalGroups = 15;
-    // ใช้ URL เดิมของคุณ
+    // เพิ่มเป็น 17 กลุ่ม (1-15 เดิม + A1, A2)
+    const totalGroups = 17;
     const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxnJHrkUy5YuQ7rk37Dm0aT9nhlx4CuLn0g2y0NmRW6i9yPwJLZJXSJqB0UvFPUvQu1vA/exec";
 
-    const FIXED_GROUP_NAMES = { 1: "ห้องส่งออก", 2: "ห้องหุงข้าว", 3: "PACK B", 4: "COOK1&3", 5: "PACK A", 6: "ห้องย่างไก่", 7: "COOK2", 8: "ห้องล้าง สุก&ดิบ", 9: "ห้องผสมไส้", 10: "ห้องเนื้อ", 11: "ห้องผัก", 12: "SEASONING", 13: "READY MEAL", 14: "ห้องกล่อง", 15: "ห้องเบอร์เกอร์" };
+    const FIXED_GROUP_NAMES = { 
+        1: "ห้องส่งออก", 2: "ห้องหุงข้าว", 3: "PACK B", 4: "COOK1&3", 
+        5: "PACK A", 6: "ห้องย่างไก่", 7: "COOK2", 8: "ห้องล้าง สุก&ดิบ", 
+        9: "ห้องผสมไส้", 10: "ห้องเนื้อ", 11: "ห้องผัก", 12: "SEASONING", 
+        13: "READY MEAL", 14: "ห้องกล่อง", 15: "ห้องเบอร์เกอร์",
+        16: "A1", 17: "A2" // กลุ่มใหม่ที่แบ่งมา
+    };
 
     let rawSheetData = [];
 
@@ -176,7 +179,7 @@
         for (let g = 1; g <= totalGroups; g++) {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-container';
-            groupDiv.id = `container-${g}`; // ผูกกับ CSS Grid Area
+            groupDiv.id = `container-${g}`;
             groupDiv.innerHTML = `<div class="group-header"><span>${FIXED_GROUP_NAMES[g]}</span></div>`;
             
             const contentDiv = document.createElement('div');
