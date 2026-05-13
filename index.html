@@ -24,7 +24,6 @@
         .group-container { border: 1px solid #333; background: #1a1a1a; padding: 5px; display: flex; flex-direction: column; border-radius: 4px; position: relative; }
         .group-header { font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px; color: #aaa; display: flex; justify-content: center; align-items: center; text-transform: uppercase; }
         
-        /* แก้ไข: ปรับ Grid เป็น 8 คอลัมน์ เพื่อให้ซอยความกว้างได้ละเอียดขึ้น */
         .group-content { 
             display: grid; 
             grid-template-columns: repeat(8, 1fr); 
@@ -36,10 +35,6 @@
             overflow-y: auto; 
         }
 
-        .sortable-ghost { opacity: 0.2; background: var(--accent-blue) !important; }
-        .sortable-chosen { border: 1px solid var(--accent-blue); }
-        
-        /* แก้ไข: ให้ Box ปกติกิน 2 ช่อง (เท่ากับ 1 ช่องของระบบ 4 คอลัมน์เดิม) */
         .block { 
             background-color: var(--card-gray); 
             display: flex; 
@@ -52,13 +47,10 @@
             border-radius: 2px; 
             user-select: none; 
             position: relative; 
-            gap: 2px; 
             min-height: 30px; 
             grid-column: span 2; 
         }
 
-        /* แก้ไข: ปรับ Leader ให้กิน 2 ช่อง (แคบลงครึ่งหนึ่งจากเดิมที่กว้าง 2/4 ตอนนี้เหลือ 2/8 ของความกว้างกลุ่ม) */
-        /* แต่ส่วนสูงยังกิน 2 แถว (grid-row: span 2) เหมือนเดิม */
         .block.leader { 
             grid-column: span 2; 
             grid-row: span 2; 
@@ -67,17 +59,16 @@
             min-height: 65px; 
         }
 
-        .status-green { background-color: var(--card-green) !important; }
-        .status-red { background-color: var(--card-red) !important; }
+        /* สถานะสี */
+        .status-green { background-color: var(--card-green) !important; color: white; }
+        .status-red { background-color: var(--card-red) !important; color: white; }
         .status-yellow { background-color: var(--card-yellow) !important; color: #000 !important; }
+        .status-unknown { background-color: #fff !important; color: #000 !important; } /* กรณีกลุ่มไม่ตรง */
+
         #modalOverlay, #authOverlay, #confirmOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 100; }
         .modal { background: #222; padding: 20px; border-radius: 8px; width: 320px; border: 1px solid #444; position: relative; }
-        .delete-btn-corner { position: absolute; top: 10px; left: 10px; color: var(--card-red); cursor: pointer; font-size: 1.2rem; }
-        .option-row { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
-        select { padding: 4px; background: #333; color: white; border: 1px solid #555; border-radius: 3px; }
         .btn-action { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-blue { background: var(--accent-blue); color: white; }
-        .btn-danger { background: var(--card-red); color: white; }
         input[type="password"] { width: 100%; padding: 10px; margin: 10px 0; background: #333; border: 1px solid #555; color: white; text-align: center; }
         .loading-text { text-align: center; color: var(--accent-blue); margin-top: 50px; font-size: 1.2rem; }
     </style>
@@ -87,36 +78,25 @@
 <div class="main-title">Machine Plant1 Dashboard</div>
 <div class="watermark">Created By RiDFinity</div>
 <div class="live-clock" id="liveClock">กำลังโหลด...</div>
-<div class="dashboard" id="dashboard"><div class="loading-text">กำลังดึงข้อมูลจาก Google Sheets...</div></div>
+<div class="dashboard" id="dashboard"><div class="loading-text">กำลังดึงข้อมูล...</div></div>
 
 <div id="authOverlay"><div class="modal"><h3 style="text-align: center;">กรุณาใส่รหัสผ่าน</h3><input type="password" id="mainPass" oninput="checkAuthBtn(this, 'authBtn')"><button id="authBtn" class="btn-action btn-blue" style="display:none;" onclick="unlockApp()">เข้าสู่ระบบ</button></div></div>
-<div id="modalOverlay"><div class="modal"><div class="delete-btn-corner" onclick="askDelete()">🗑️</div><h3 style="margin-top:0; color: var(--accent-blue); text-align: center;" id="modalTitle"></h3><div class="option-row"><span>1. ใช้งานได้</span><select id="opt1" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div><div class="option-row"><span>2. น็อตครบ</span><select id="opt2" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div><div class="option-row"><span>3. สะอาด</span><select id="opt3" onchange="validateForm()"><option value="">เลือก</option><option value="true">✅ ถูก</option><option value="false">❌ ผิด</option></select></div><button id="saveBtn" class="btn-action btn-blue" style="display:none;" onclick="saveStatus()">บันทึก</button><button onclick="closeModal()" style="margin-top: 10px; width: 100%; background: none; color: #aaa; border: none; cursor: pointer;">ปิดหน้าต่าง</button></div></div>
-<div id="confirmOverlay"><div class="modal" style="text-align: center;"><h3>ยืนยันการลบ?</h3><p>บล็อกนี้จะถูกซ่อนไว้จนกว่าจะมีการรีโหลดข้อมูลใหม่</p><button class="btn-action btn-danger" onclick="confirmDelete()">ใช่, ลบเลย</button><button onclick="document.getElementById('confirmOverlay').style.display='none'" style="margin-top: 10px; width: 100%; background: none; color: #aaa; border: none; cursor: pointer;">ยกเลิก</button></div></div>
 
 <script>
     const MASTER_KEY = "cpram2026";
     const totalGroups = 15;
-    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxK-uW3Q4nygtCdobh6-SbhT1jwZfYS-8fQxR2o-NPTrfQnM5xz4OkZUhItxqyXld4oJQ/exec";
+    // URL ของ Web App จาก Google Apps Script
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxnJHrkUy5YuQ7rk37Dm0aT9nhlx4CuLn0g2y0NmRW6i9yPwJLZJXSJqB0UvFPUvQu1vA/exec";
 
     const FIXED_GROUP_NAMES = { 1: "ห้องเนื้อ", 2: "COOK1&3", 3: "SEASONING", 4: "ห้องผัก", 5: "ห้องหุงข้าว", 6: "ห้องย่างไก่", 7: "COOK2", 8: "ห้องล้าง สุก&ดิบ", 9: "ห้องผสมไส้", 10: "ห้องส่งออก", 11: "PACK A", 12: "PACK B", 13: "READY MEAL", 14: "ห้องกล่อง", 15: "ห้องเบอร์เกอร์" };
 
-    let appData = JSON.parse(localStorage.getItem('heatmapData')) || {};
-    let groupOrder = JSON.parse(localStorage.getItem('groupOrder')) || {};
-    let nameMap = {}, leaderStatusMap = {}, statusMap = {};
-    let currentTargetId = null, rawSheetData = [];
+    let rawSheetData = [];
 
     async function loadSheetData() {
         try {
             const response = await fetch(SHEET_API_URL);
             rawSheetData = await response.json();
-            if (rawSheetData && rawSheetData.length > 0) {
-                rawSheetData.forEach(item => {
-                    nameMap[item.id] = item.name;
-                    leaderStatusMap[item.id] = item.isLeader;
-                    statusMap[item.id] = item.status;
-                });
-                renderDashboard();
-            }
+            renderDashboard();
         } catch (error) {
             console.error("Fetch Error:", error);
             document.getElementById('dashboard').innerHTML = `<div style="color:red; text-align:center; width:100%;">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>`;
@@ -128,104 +108,102 @@
         container.innerHTML = '';
         const groupContents = {};
         for (let i = 1; i <= totalGroups; i++) groupContents[i] = [];
-        const placedIds = new Set();
-        Object.values(groupOrder).forEach(ids => ids.forEach(id => placedIds.add(id)));
-        for (let g = 1; g <= totalGroups; g++) {
-            if (groupOrder[g]) {
-                groupOrder[g].forEach(id => { if (nameMap[id]) groupContents[g].push(id); });
-            }
-        }
-        rawSheetData.forEach((item, index) => {
-            if (!placedIds.has(item.id.toString()) && !placedIds.has(item.id)) {
-                let targetG = (index % totalGroups) + 1;
-                groupContents[targetG].push(item.id);
+
+        rawSheetData.forEach(item => {
+            // ลำดับความสำคัญ: 1.กลุ่มล่าสุด (F) 2.กลุ่มเริ่มต้น (E)
+            let assignedGroupName = (item.latestGroup || item.initialGroup || "").trim();
+            let groupId = findGroupIdByName(assignedGroupName);
+
+            if (groupId) {
+                groupContents[groupId].push(item);
+            } else {
+                // ถ้าไม่ตรงกลุ่มเลย ให้ไปอยู่กลุ่ม 1 แต่ติดสถานะ Unknown (สีขาว)
+                item.isUnknownGroup = true;
+                groupContents[1].push(item); 
             }
         });
+
         for (let g = 1; g <= totalGroups; g++) {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-container';
-            groupDiv.innerHTML = `<div class="group-header"><span>${FIXED_GROUP_NAMES[g] || g}</span></div>`;
+            groupDiv.innerHTML = `<div class="group-header"><span>${FIXED_GROUP_NAMES[g]}</span></div>`;
+            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'group-content';
             contentDiv.id = `group-${g}`;
-            groupContents[g].forEach(id => { contentDiv.appendChild(createBlock(id)); });
+            contentDiv.dataset.name = FIXED_GROUP_NAMES[g];
+
+            groupContents[g].forEach(item => {
+                contentDiv.appendChild(createBlock(item));
+            });
+
             groupDiv.appendChild(contentDiv);
             container.appendChild(groupDiv);
-            new Sortable(contentDiv, { group: 'shared', animation: 150, ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', onEnd: saveAllOrders });
+
+            new Sortable(contentDiv, {
+                group: 'shared',
+                animation: 150,
+                onEnd: async (evt) => {
+                    const itemEl = evt.item;
+                    const newGroupName = evt.to.dataset.name;
+                    const rowIndex = itemEl.dataset.rowindex;
+                    
+                    // บันทึกลงคอลัมน์ F ใน Sheets
+                    await updateLatestGroupInSheet(rowIndex, newGroupName);
+                    
+                    // อัปเดตสี (เผื่อกรณีลากจากที่ไม่มีกลุ่มเข้ากลุ่มที่มีอยู่จริง)
+                    const itemData = rawSheetData.find(d => d.id === itemEl.id);
+                    if(itemData) {
+                        itemData.isUnknownGroup = false; 
+                        applyColor(itemEl, itemData);
+                    }
+                }
+            });
         }
     }
 
-    function saveAllOrders() {
-        const newOrder = {};
-        for (let i = 1; i <= totalGroups; i++) {
-            const el = document.getElementById(`group-${i}`);
-            if (el) newOrder[i] = Array.from(el.children).map(child => child.id);
+    function findGroupIdByName(name) {
+        for (let id in FIXED_GROUP_NAMES) {
+            if (FIXED_GROUP_NAMES[id] === name) return id;
         }
-        groupOrder = newOrder;
-        localStorage.setItem('groupOrder', JSON.stringify(groupOrder));
+        return null;
     }
 
-    function createBlock(id) {
+    async function updateLatestGroupInSheet(rowIndex, newGroupName) {
+        try {
+            await fetch(SHEET_API_URL, {
+                method: "POST",
+                mode: "no-cors", // ใช้ no-cors สำหรับ GAS
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ rowIndex: rowIndex, newGroupName: newGroupName })
+            });
+            console.log("Updated Sheet:", newGroupName);
+        } catch (e) { console.error("Update Error:", e); }
+    }
+
+    function createBlock(item) {
         const div = document.createElement('div');
-        const isLeader = leaderStatusMap[id] === true;
-        div.className = `block ${isLeader ? 'leader' : ''}`;
-        div.id = id;
-        div.innerText = nameMap[id] || "N/A";
-        div.onclick = (e) => { if (e.target === div) openModal(id); };
-        applyColor(div, id);
+        div.className = `block ${item.isLeader ? 'leader' : ''}`;
+        div.id = item.id;
+        div.dataset.rowindex = item.rowIndex;
+        div.innerText = item.name;
+        applyColor(div, item);
         return div;
     }
 
-    function applyColor(el, id) {
-        if (!el) return;
-        el.classList.remove('status-green', 'status-red', 'status-yellow');
-        const s = statusMap[id];
+    function applyColor(el, item) {
+        el.classList.remove('status-green', 'status-red', 'status-yellow', 'status-unknown');
+        
+        // ถ้ากลุ่มไม่ตรงกับข้อมูลในระบบเลย (คอลัมน์ E/F ไม่ตรงกับชื่อกลุ่มทั้ง 15)
+        if (item.isUnknownGroup) {
+            el.classList.add('status-unknown');
+            return;
+        }
+
+        const s = item.status;
         if (s === 0 || s === "0") el.classList.add('status-green');
         else if (s === 1 || s === "1") el.classList.add('status-yellow');
         else if (s === 2 || s === "2") el.classList.add('status-red');
-        else if (appData[id]) {
-            const data = appData[id];
-            if (data.v1 === true && data.v2 === true && data.v3 === true) el.classList.add('status-green');
-            else if (data.v1 === false) el.classList.add('status-red');
-            else if (data.v1 !== "" && data.v2 !== "" && data.v3 !== "") el.classList.add('status-yellow');
-        }
-    }
-
-    function openModal(id) {
-        currentTargetId = id;
-        document.getElementById('modalTitle').innerText = nameMap[id];
-        document.getElementById('modalOverlay').style.display = 'flex';
-        const d = appData[id] || { v1: '', v2: '', v3: '' };
-        document.getElementById('opt1').value = (d.v1 === "" || d.v1 === undefined) ? "" : d.v1.toString();
-        document.getElementById('opt2').value = (d.v2 === "" || d.v2 === undefined) ? "" : d.v2.toString();
-        document.getElementById('opt3').value = (d.v3 === "" || d.v3 === undefined) ? "" : d.v3.toString();
-        validateForm();
-    }
-
-    function saveStatus() {
-        appData[currentTargetId] = {
-            v1: document.getElementById('opt1').value === "true",
-            v2: document.getElementById('opt2').value === "true",
-            v3: document.getElementById('opt3').value === "true"
-        };
-        localStorage.setItem('heatmapData', JSON.stringify(appData));
-        applyColor(document.getElementById(currentTargetId), currentTargetId);
-        closeModal();
-    }
-
-    function validateForm() {
-        const v1 = document.getElementById('opt1').value, v2 = document.getElementById('opt2').value, v3 = document.getElementById('opt3').value;
-        document.getElementById('saveBtn').style.display = (v1 !== "" && v2 !== "" && v3 !== "") ? 'block' : 'none';
-    }
-
-    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-    function askDelete() { document.getElementById('confirmOverlay').style.display = 'flex'; }
-    function confirmDelete() {
-        const el = document.getElementById(currentTargetId);
-        if(el) el.remove();
-        saveAllOrders();
-        document.getElementById('confirmOverlay').style.display = 'none';
-        closeModal();
     }
 
     function checkAuthBtn(input, btnId) { document.getElementById(btnId).style.display = input.value.length > 0 ? 'block' : 'none'; }
