@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Symmetry Machine Monitoring - Invisible Scroll</title>
+    <title>Symmetry Machine Monitoring - Hidden Behind Card</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
@@ -33,7 +33,7 @@
             padding: 1rem;
         }
         
-        /* คอนเทนเนอร์หลักของ Card ต้องล็อก overflow */
+        /* Card ทำหน้าที่เป็นหน้าต่าง (Mask) */
         .card { 
             background: #111; 
             border: 1px solid #334155; 
@@ -41,6 +41,7 @@
             position: relative; 
             display: flex; 
             flex-direction: column; 
+            /* บังส่วนที่เกินออกมาทั้งหมด */
             overflow: hidden !important; 
         }
         
@@ -53,39 +54,39 @@
             background: rgba(0,0,0,0.8); 
             padding: 2px 8px; 
             border-radius: 4px; 
-            z-index: 10; 
+            z-index: 20; /* ให้อยู่เหนือ Drop-zone */
         }
 
-        /* ------------------------------------------------------------
-           เทคนิคขั้นเด็ดขาด: ดัน Scrollbar ออกไปนอกขอบ Card
-           ------------------------------------------------------------ */
+        /* Container ชั้นในที่ซ่อนอยู่หลัง Card */
+        .scroll-wrapper {
+            position: relative;
+            flex-grow: 1;
+            /* ขยายให้กว้างกว่า Card เพื่อผลัก Scrollbar ออกไปข้างนอก */
+            width: calc(100% + 30px); 
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* ซ่อน Scrollbar มาตรฐาน (เพื่อความชัวร์) */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .scroll-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* พื้นที่วาง Block */
         .drop-zone { 
-            flex-grow: 1; 
-            padding: 2.5rem 0.5rem 0.5rem 0.5rem; 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
             gap: 0.5rem; 
+            padding: 2.5rem 35px 1rem 0.5rem; /* padding ขวาเผื่อไว้กันตัวเลขโดนบัง */
             align-content: start; 
-            
-            /* อนุญาตให้ Scroll */
-            overflow-y: scroll !important; 
-            
-            /* ดัน Scrollbar ไปทางขวา 20px (ให้พ้นขอบ Card ที่ซ่อนอยู่) */
-            margin-right: -20px !important; 
-            padding-right: 20px !important;
-
-            /* ซ่อนมาตรฐานสำหรับ Browser ที่รองรับ */
-            scrollbar-width: none !important;
-            -ms-overflow-style: none !important;
+            min-height: 100%;
         }
 
-        .drop-zone::-webkit-scrollbar {
-            width: 0 !important;
-            height: 0 !important;
-            display: none !important;
+        .drop-zone.large { 
+            grid-template-columns: repeat(6, 1fr); 
         }
-
-        .drop-zone.large { grid-template-columns: repeat(6, 1fr); }
 
         .block { background: #424242; border-radius: 4px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; cursor: grab; text-align: center; padding: 2px; }
         .block.leader { grid-column: span 2; grid-row: span 2; height: 84px; font-weight: bold; border: 1px solid #666; }
@@ -105,19 +106,28 @@
     </header>
 
     <main class="dashboard-container">
+        <!-- กลุ่มที่ 1 -->
         <div class="card">
             <span class="label-tag">GROUP 1: INLET</span>
-            <div id="group-1" class="drop-zone large" data-name="GROUP 1"></div>
+            <div class="scroll-wrapper">
+                <div id="group-1" class="drop-zone large" data-name="GROUP 1"></div>
+            </div>
         </div>
 
+        <!-- กลุ่มที่ 2 -->
         <div class="card">
             <span class="label-tag">GROUP 2: PROCESS</span>
-            <div id="group-2" class="drop-zone large" data-name="GROUP 2"></div>
+            <div class="scroll-wrapper">
+                <div id="group-2" class="drop-zone large" data-name="GROUP 2"></div>
+            </div>
         </div>
 
+        <!-- กลุ่มที่ 3 -->
         <div class="card">
             <span class="label-tag">GROUP 3: OUTLET</span>
-            <div id="group-3" class="drop-zone" data-name="GROUP 3"></div>
+            <div class="scroll-wrapper">
+                <div id="group-3" class="drop-zone" data-name="GROUP 3"></div>
+            </div>
         </div>
     </main>
 
