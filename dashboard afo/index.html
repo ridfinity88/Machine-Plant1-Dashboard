@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Symmetry Machine Monitoring - Clean UI V2</title>
+    <title>Symmetry Machine Monitoring - Invisible Scroll</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -17,7 +16,6 @@
             --card-red: #c62828;
         }
         
-        /* ป้องกันการเลื่อนในระดับ Body */
         html, body { 
             height: 100vh; 
             margin: 0; 
@@ -33,9 +31,9 @@
             gap: 1rem; 
             height: calc(100vh - 4rem); 
             padding: 1rem;
-            overflow: hidden;
         }
         
+        /* คอนเทนเนอร์หลักของ Card ต้องล็อก overflow */
         .card { 
             background: #111; 
             border: 1px solid #334155; 
@@ -57,34 +55,34 @@
             border-radius: 4px; 
             z-index: 10; 
         }
-        
+
         /* ------------------------------------------------------------
-           ส่วนที่แก้ไข: ซ่อน Scrollbar แบบเด็ดขาดสำหรับทุก Browser
+           เทคนิคขั้นเด็ดขาด: ดัน Scrollbar ออกไปนอกขอบ Card
            ------------------------------------------------------------ */
         .drop-zone { 
             flex-grow: 1; 
-            padding: 2.5rem 0.5rem 0.5rem; 
+            padding: 2.5rem 0.5rem 0.5rem 0.5rem; 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
             gap: 0.5rem; 
             align-content: start; 
             
-            /* อนุญาตให้เลื่อนได้ตามปกติ */
+            /* อนุญาตให้ Scroll */
             overflow-y: scroll !important; 
             
-            /* ซ่อน Scrollbar สำหรับ Firefox */
+            /* ดัน Scrollbar ไปทางขวา 20px (ให้พ้นขอบ Card ที่ซ่อนอยู่) */
+            margin-right: -20px !important; 
+            padding-right: 20px !important;
+
+            /* ซ่อนมาตรฐานสำหรับ Browser ที่รองรับ */
             scrollbar-width: none !important;
-            /* ซ่อน Scrollbar สำหรับ IE และ Edge */
             -ms-overflow-style: none !important;
         }
 
-        /* ซ่อน Scrollbar สำหรับ Chrome, Safari, Edge (Blink) และ Opera */
         .drop-zone::-webkit-scrollbar {
-            display: none !important;
             width: 0 !important;
             height: 0 !important;
-            background: transparent !important;
-            -webkit-appearance: none !important;
+            display: none !important;
         }
 
         .drop-zone.large { grid-template-columns: repeat(6, 1fr); }
@@ -138,21 +136,16 @@
 
         function renderBlocks(data) {
             document.querySelectorAll('.drop-zone').forEach(z => z.innerHTML = '');
-
             data.forEach(item => {
                 const div = document.createElement('div');
                 div.className = `block status-${item.status} ${item.isLeader ? 'leader' : ''}`;
                 div.id = item.id;
                 div.dataset.rowindex = item.rowIndex;
                 div.innerText = item.name;
-
                 const targetGroupName = item.latestGroup || item.initialGroup;
-                const targetZone = Array.from(document.querySelectorAll('.drop-zone'))
-                                     .find(z => z.dataset.name === targetGroupName);
-                
+                const targetZone = Array.from(document.querySelectorAll('.drop-zone')).find(z => z.dataset.name === targetGroupName);
                 if (targetZone) targetZone.appendChild(div);
             });
-
             setupSortable();
         }
 
@@ -164,9 +157,7 @@
                     ghostClass: 'ghost',
                     onEnd: function (evt) {
                         saveOrderToSheet(evt.to);
-                        if (evt.from !== evt.to) {
-                            saveOrderToSheet(evt.from);
-                        }
+                        if (evt.from !== evt.to) saveOrderToSheet(evt.from);
                     }
                 });
             });
@@ -175,15 +166,11 @@
         async function saveOrderToSheet(zoneElement) {
             const groupName = zoneElement.dataset.name;
             const blocks = Array.from(zoneElement.children);
-            
-            const updates = blocks.map((block, index) => {
-                return {
-                    rowIndex: block.dataset.rowindex,
-                    newGroupName: groupName,
-                    order: index + 1
-                };
-            });
-
+            const updates = blocks.map((block, index) => ({
+                rowIndex: block.dataset.rowindex,
+                newGroupName: groupName,
+                order: index + 1
+            }));
             try {
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
