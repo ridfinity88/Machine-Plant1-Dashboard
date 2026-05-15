@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Machine Dashboard</title>
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -19,21 +24,18 @@
         #dashboardPage { display: none; flex-direction: column; height: 100vh; }
         .dashboard-container { display: grid; grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right); gap: 1rem; padding: 1rem; height: calc(100vh - 60px); }
         .card { background: #000; border: 1px solid #334155; border-radius: 12px; position: relative; }
-        /* เอฟเฟกต์ไฟกระพริบเบาๆ เมื่อข้อมูลเปลี่ยน */
-        .upd-flash { animation: flash 0.8s; }
-        @keyframes flash { 0% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div id="loginPage">
         <div class="login-box">
-            <h2 class="text-center text-blue-400 font-bold text-xl uppercase">System Login</h2>
+            <h2 class="text-center text-blue-400 font-bold text-xl">SYSTEM LOGIN</h2>
             <div class="input-group">
-                <input type="password" id="passInput" placeholder="รหัสผ่าน" onkeypress="handleEnter(event)">
+                <input type="password" id="passInput" placeholder="รหัสผ่าน" autocomplete="off" onkeypress="handleEnter(event)">
                 <button type="button" class="eye-btn" onclick="togglePass()"><span id="eyeIcon">👁️</span></button>
             </div>
-            <button class="login-btn" onclick="checkLogin()">LOGIN</button>
+            <button class="login-btn" onclick="checkLogin()">เข้าสู่ระบบ</button>
             <p id="errorTxt" class="error-text">รหัสผ่านไม่ถูกต้อง</p>
         </div>
     </div>
@@ -41,23 +43,23 @@
     <div id="dashboardPage">
         <header class="flex justify-between items-center h-14 px-6 border-b border-slate-800">
             <h1 class="text-blue-400 font-bold">MACHINE MONITORING</h1>
-            <div id="clock" class="font-mono text-slate-400 text-lg">00:00:00</div>
+            <div id="clock" class="font-mono text-slate-400">00:00:00</div>
         </header>
 
         <main class="dashboard-container">
             <div class="card p-4">
-                <span class="text-xs text-slate-500 font-bold uppercase">⑤ Machine Data</span>
+                <span class="text-xs text-slate-500 font-bold">⑤ DATA</span>
                 <table class="w-full text-[11px] mt-4">
-                    <thead class="text-blue-300 border-b border-slate-800 text-left">
-                        <tr><th class="pb-2">Name</th><th class="text-center pb-2">Temp</th><th class="text-center pb-2">Press</th><th class="text-right pb-2">Status</th></tr>
+                    <thead class="text-blue-300 border-b border-slate-800">
+                        <tr><th>Name</th><th class="text-center">T</th><th class="text-center">P</th><th class="text-right">S</th></tr>
                     </thead>
                     <tbody id="data-table"></tbody>
                 </table>
             </div>
             <div class="grid grid-rows-3 gap-4">
-                <div class="card flex items-center justify-center p-2"><img src="cen.png" class="max-h-[90%]"></div>
-                <div class="card flex items-center justify-center p-2"><img src="in.png" class="max-h-[90%]"></div>
-                <div class="card flex items-center justify-center p-2"><img src="out.png" class="max-h-[90%]"></div>
+                <div class="card flex items-center justify-center p-2"><img src="cen.png?v=1" class="max-h-[90%]"></div>
+                <div class="card flex items-center justify-center p-2"><img src="in.png?v=1" class="max-h-[90%]"></div>
+                <div class="card flex items-center justify-center p-2"><img src="out.png?v=1" class="max-h-[90%]"></div>
             </div>
             <div class="grid grid-rows-2 gap-4">
                 <div class="card p-4 flex flex-col items-center justify-around">
@@ -86,57 +88,53 @@
             if (document.getElementById('passInput').value === MY_PASS) {
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('dashboardPage').style.display = 'flex';
-                startUpdateCycle(); // เริ่มวงจรการอัปเดต
+                startService();
             } else {
                 document.getElementById('errorTxt').style.display = 'block';
                 document.getElementById('passInput').value = '';
             }
         }
 
-        function startUpdateCycle() {
-            // อัปเดตนาฬิกาทุกวินาที
-            setInterval(() => {
-                document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-            }, 1000);
-
+        function startService() {
+            setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+            
             // ดึงข้อมูลครั้งแรก
             fetchData();
             
-            // ตั้งเวลาดึงข้อมูลใหม่ทุก 10 วินาที
-            setInterval(fetchData, 10000); 
+            // ดึงข้อมูลใหม่ทุก 10 วินาทีแบบเนียนๆ
+            setInterval(fetchData, 10000);
         }
 
         async function fetchData() {
             try {
-                // เติม ?v= + timestamp เพื่อป้องกัน Browser จำค่าเก่า (Anti-Cache)
-                const cacheBuster = SCRIPT_URL + "?t=" + new Date().getTime();
-                const response = await fetch(cacheBuster);
+                // บังคับเริ่มใหม่เสมอด้วยการต่อท้าย URL ด้วยเลขเวลาปัจจุบัน (Anti-Cache)
+                const finalUrl = `${SCRIPT_URL}?nocache=${new Date().getTime()}`;
+                
+                const response = await fetch(finalUrl, { 
+                    method: 'GET',
+                    cache: 'no-store' // สั่งไม่ให้จำลง Cache ในระดับโปรโตคอล
+                });
+                
                 const data = await response.json();
                 
                 if (data && data.table) {
-                    renderTable(data.table);
+                    let html = "";
+                    data.table.forEach(item => {
+                        const sColor = (item.status === 'Running') ? 'text-green-400' : 'text-amber-400';
+                        html += `
+                            <tr class="border-b border-slate-900">
+                                <td class="py-2 text-slate-300 font-bold">${item.machine}</td>
+                                <td class="text-center text-blue-400 font-bold">${item.temp}</td>
+                                <td class="text-center text-green-400 font-bold">${item.pressure}</td>
+                                <td class="text-right font-bold ${sColor}">${item.status}</td>
+                            </tr>`;
+                    });
+                    document.getElementById('data-table').innerHTML = html;
+                    console.log("Data updated at: " + new Date().toLocaleTimeString());
                 }
-            } catch (error) {
-                console.error("Fetch error:", error);
+            } catch (err) {
+                console.error("Fetch Error:", err);
             }
-        }
-
-        function renderTable(tableData) {
-            const tbody = document.getElementById('data-table');
-            let html = "";
-            
-            tableData.forEach(item => {
-                const sColor = (item.status === 'Running' || item.status === 'R') ? 'text-green-400' : 'text-amber-400';
-                html += `
-                    <tr class="border-b border-slate-900 upd-flash">
-                        <td class="py-2 text-slate-300 font-bold">${item.machine}</td>
-                        <td class="text-center text-blue-400 font-bold">${item.temp}</td>
-                        <td class="text-center text-green-400 font-bold">${item.pressure}</td>
-                        <td class="text-right font-bold ${sColor}">${item.status}</td>
-                    </tr>`;
-            });
-            
-            tbody.innerHTML = html;
         }
 
         window.onload = () => document.getElementById('passInput').focus();
