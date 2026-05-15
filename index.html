@@ -4,25 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Machine Dashboard</title>
-    
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --width-col-left: 1.0fr; --width-col-center: 1.2fr; --width-col-right: 0.6fr; }
+        :root {
+            --width-col-left: 1.0fr; --width-col-center: 1.2fr; --width-col-right: 0.6fr;
+        }
         body { background: #000; color: #fff; margin: 0; overflow: hidden; font-family: sans-serif; }
-        #loginPage { position: fixed; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { width: 320px; background: #0f172a; padding: 30px; border-radius: 16px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* สไตล์หน้า Login */
+        #loginPage {
+            position: fixed; inset: 0; background: #000;
+            display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .login-box {
+            width: 320px; background: #0f172a; padding: 30px;
+            border-radius: 16px; border: 1px solid #334155;
+            display: flex; flex-direction: column; gap: 15px;
+        }
         .input-group { position: relative; width: 100%; }
-        .login-box input { width: 100%; height: 45px; background: #020617; border: 1px solid #334155; border-radius: 8px; color: #fff; padding: 0 40px 0 12px; outline: none; }
-        .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; }
-        .login-btn { width: 100%; height: 45px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .login-box input {
+            width: 100%; height: 45px; background: #020617;
+            border: 1px solid #334155; border-radius: 8px;
+            color: #fff; padding: 0 40px 0 12px; outline: none;
+        }
+        .login-box input:focus { border-color: #3b82f6; }
+        
+        /* ปุ่มดวงตา */
+        .eye-btn {
+            position: absolute; right: 10px; top: 50%;
+            transform: translateY(-50%); background: none;
+            border: none; color: #94a3b8; cursor: pointer;
+            font-size: 18px; line-height: 1;
+        }
+        
+        .login-btn {
+            width: 100%; height: 45px; background: #2563eb;
+            color: #fff; border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer;
+        }
         .error-text { color: #f87171; font-size: 13px; text-align: center; display: none; }
+
         #dashboardPage { display: none; flex-direction: column; height: 100vh; }
-        .dashboard-container { display: grid; grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right); gap: 1rem; padding: 1rem; height: calc(100vh - 60px); }
+        .dashboard-container {
+            display: grid; grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right);
+            gap: 1rem; padding: 1rem; height: calc(100vh - 60px);
+        }
         .card { background: #000; border: 1px solid #334155; border-radius: 12px; position: relative; }
     </style>
 </head>
@@ -30,11 +57,15 @@
 
     <div id="loginPage">
         <div class="login-box">
-            <h2 class="text-center text-blue-400 font-bold text-xl">SYSTEM LOGIN</h2>
+            <h2 class="text-center text-blue-400 font-bold text-xl">LOGIN</h2>
+            
             <div class="input-group">
-                <input type="password" id="passInput" placeholder="รหัสผ่าน" autocomplete="off" onkeypress="handleEnter(event)">
-                <button type="button" class="eye-btn" onclick="togglePass()"><span id="eyeIcon">👁️</span></button>
+                <input type="password" id="passInput" placeholder="รหัสผ่าน" onkeypress="handleEnter(event)">
+                <button type="button" class="eye-btn" onclick="togglePass()">
+                    <span id="eyeIcon">👁️</span>
+                </button>
             </div>
+
             <button class="login-btn" onclick="checkLogin()">เข้าสู่ระบบ</button>
             <p id="errorTxt" class="error-text">รหัสผ่านไม่ถูกต้อง</p>
         </div>
@@ -56,11 +87,13 @@
                     <tbody id="data-table"></tbody>
                 </table>
             </div>
+            
             <div class="grid grid-rows-3 gap-4">
-                <div class="card flex items-center justify-center p-2"><img src="cen.png?v=1" class="max-h-[90%]"></div>
-                <div class="card flex items-center justify-center p-2"><img src="in.png?v=1" class="max-h-[90%]"></div>
-                <div class="card flex items-center justify-center p-2"><img src="out.png?v=1" class="max-h-[90%]"></div>
+                <div class="card flex items-center justify-center"><img src="cen.png" class="max-h-[80%]"></div>
+                <div class="card flex items-center justify-center"><img src="in.png" class="max-h-[80%]"></div>
+                <div class="card flex items-center justify-center"><img src="out.png" class="max-h-[80%]"></div>
             </div>
+
             <div class="grid grid-rows-2 gap-4">
                 <div class="card p-4 flex flex-col items-center justify-around">
                     <canvas id="p1" width="80" height="80"></canvas>
@@ -72,71 +105,69 @@
     </div>
 
     <script>
+        // --- ระบบ Login ---
         const MY_PASS = "1234";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec";
-
-        function handleEnter(e) { if (e.key === 'Enter') checkLogin(); }
-
-        function togglePass() {
-            const input = document.getElementById('passInput');
-            const icon = document.getElementById('eyeIcon');
-            input.type = (input.type === "password") ? "text" : "password";
-            icon.innerText = (input.type === "password") ? "👁️" : "🙈";
-        }
 
         function checkLogin() {
-            if (document.getElementById('passInput').value === MY_PASS) {
+            const input = document.getElementById('passInput');
+            if (input.value === MY_PASS) {
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('dashboardPage').style.display = 'flex';
-                startService();
+                // เริ่มโหลดข้อมูล Dashboard
+                startDashboard();
             } else {
                 document.getElementById('errorTxt').style.display = 'block';
-                document.getElementById('passInput').value = '';
+                input.value = '';
+                input.focus();
             }
         }
 
-        function startService() {
-            setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+        // ฟังก์ชันดักจับ Enter
+        function handleEnter(e) {
+            if (e.key === 'Enter') {
+                checkLogin();
+            }
+        }
+
+        // ฟังก์ชันเปิด-ปิดดวงตา
+        function togglePass() {
+            const input = document.getElementById('passInput');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerText = "🙈"; // เปลี่ยนเป็นรูปปิดตา
+            } else {
+                input.type = "password";
+                icon.innerText = "👁️"; // เปลี่ยนเป็นรูปเปิดตา
+            }
+        }
+
+        // --- ระบบ Dashboard (ย่อมาจากโค้ดเดิมของคุณ) ---
+        function startDashboard() {
+            // นาฬิกา
+            setInterval(() => {
+                document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+            }, 1000);
             
-            // ดึงข้อมูลครั้งแรก
+            // ดึงข้อมูล
             fetchData();
-            
-            // ดึงข้อมูลใหม่ทุก 10 วินาทีแบบเนียนๆ
             setInterval(fetchData, 10000);
         }
 
         async function fetchData() {
+            const URL = "https://script.google.com/macros/s/AKfycbxYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec";
             try {
-                // บังคับเริ่มใหม่เสมอด้วยการต่อท้าย URL ด้วยเลขเวลาปัจจุบัน (Anti-Cache)
-                const finalUrl = `${SCRIPT_URL}?nocache=${new Date().getTime()}`;
-                
-                const response = await fetch(finalUrl, { 
-                    method: 'GET',
-                    cache: 'no-store' // สั่งไม่ให้จำลง Cache ในระดับโปรโตคอล
+                const res = await fetch(URL);
+                const data = await res.json();
+                let html = "";
+                data.table.forEach(item => {
+                    html += `<tr class="border-b border-slate-900"><td class="py-2">${item.machine}</td><td class="text-center text-blue-400">${item.temp}</td><td class="text-center text-green-400">${item.pressure}</td><td class="text-right">${item.status}</td></tr>`;
                 });
-                
-                const data = await response.json();
-                
-                if (data && data.table) {
-                    let html = "";
-                    data.table.forEach(item => {
-                        const sColor = (item.status === 'Running') ? 'text-green-400' : 'text-amber-400';
-                        html += `
-                            <tr class="border-b border-slate-900">
-                                <td class="py-2 text-slate-300 font-bold">${item.machine}</td>
-                                <td class="text-center text-blue-400 font-bold">${item.temp}</td>
-                                <td class="text-center text-green-400 font-bold">${item.pressure}</td>
-                                <td class="text-right font-bold ${sColor}">${item.status}</td>
-                            </tr>`;
-                    });
-                    document.getElementById('data-table').innerHTML = html;
-                    console.log("Data updated at: " + new Date().toLocaleTimeString());
-                }
-            } catch (err) {
-                console.error("Fetch Error:", err);
-            }
+                document.getElementById('data-table').innerHTML = html;
+            } catch(e) { console.log(e); }
         }
 
+        // โฟกัสที่ช่องรหัสทันทีเมื่อเปิดหน้า
         window.onload = () => document.getElementById('passInput').focus();
     </script>
 </body>
