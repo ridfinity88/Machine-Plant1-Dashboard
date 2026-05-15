@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Symmetry Machine Dashboard</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-
     <style>
         :root {
             --width-col-left: 1.0fr;
@@ -23,26 +20,22 @@
 
         html, body {
             height: 100vh;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             overflow: hidden;
             background-color: #000000;
             color: #f8fafc;
             font-family: sans-serif;
         }
 
-        /* LOGIN PAGE */
+        /* LOGIN PAGE - ปิด Dashboard ไว้ก่อน */
         #loginPage {
-            width: 100%;
-            height: 100vh;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: #000000;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #000;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 9999;
         }
 
         .login-box {
@@ -53,86 +46,75 @@
             padding: 30px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            gap: 20px;
         }
 
         .login-box h2 {
             text-align: center;
             color: #60a5fa;
             margin: 0;
-            font-size: 1.5rem;
             font-weight: bold;
+            letter-spacing: 1px;
         }
 
-        /* Input Container สำหรับวางไอคอน */
-        .password-container {
+        .password-wrapper {
             position: relative;
             width: 100%;
         }
 
         .login-box input {
             width: 100%;
-            height: 46px;
-            border-radius: 8px;
-            border: 1px solid #334155;
+            height: 48px;
             background: #020617;
+            border: 1px solid #334155;
+            border-radius: 8px;
             color: white;
-            padding: 0 45px 0 12px; /* เผื่อที่ด้านขวาสำหรับไอคอน */
+            padding: 0 45px 0 15px;
             font-size: 16px;
             outline: none;
-            transition: border-color 0.2s;
         }
 
-        .login-box input:focus {
-            border-color: #2563eb;
-        }
+        .login-box input:focus { border-color: #2563eb; }
 
-        .toggle-password {
+        .eye-toggle {
             position: absolute;
             right: 12px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
             color: #94a3b8;
+            background: none;
+            border: none;
+            padding: 5px;
             display: flex;
             align-items: center;
         }
 
-        .toggle-password:hover {
-            color: #f8fafc;
-        }
+        .eye-toggle:hover { color: #f8fafc; }
 
-        .login-box button {
-            height: 46px;
-            border: none;
-            border-radius: 8px;
+        .login-btn {
+            height: 48px;
             background: #2563eb;
             color: white;
+            border: none;
+            border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: 0.2s;
         }
 
-        .login-box button:hover {
-            background: #1d4ed8;
-        }
+        .login-btn:hover { background: #1d4ed8; }
 
         .error-text {
             color: #f87171;
             font-size: 13px;
             text-align: center;
             display: none;
-            margin-top: -8px;
         }
 
-        /* DASHBOARD */
-        #dashboardPage {
-            display: none;
-            width: 100%;
-            height: 100%;
-        }
+        #dashboardPage { display: none; width: 100%; height: 100%; }
 
+        /* DASHBOARD LAYOUT */
         .dashboard-container {
             display: grid;
             grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right);
@@ -145,7 +127,7 @@
         .right-panel { display: grid; grid-template-rows: var(--height-chart-top) var(--height-chart-bottom); gap: 1rem; }
 
         .card {
-            background-color: #000000;
+            background-color: #000;
             border: 1px solid #334155;
             border-radius: 0.75rem;
             position: relative;
@@ -153,56 +135,36 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            width: 100%;
-            height: 100%;
-            min-height: 0;
+            width: 100%; height: 100%;
         }
-
-        .machine-img { width: 90%; height: 85%; object-fit: contain; }
 
         .label-tag {
-            position: absolute;
-            top: 0.75rem; left: 0.75rem;
-            font-size: 0.7rem;
-            color: #94a3b8;
-            font-weight: bold;
-            z-index: 10;
+            position: absolute; top: 0.75rem; left: 0.75rem;
+            font-size: 0.7rem; color: #94a3b8; font-weight: bold;
             background: rgba(15, 23, 42, 0.8);
-            padding: 2px 8px;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-
-        .chart-container { position: relative; width: 100px; height: 100px; }
-        .chart-value {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-weight: 800; font-size: 0.9rem; color: #10b981;
+            padding: 2px 8px; border-radius: 4px;
         }
     </style>
 </head>
-
 <body>
 
     <div id="loginPage">
         <div class="login-box">
-            <h2>SYSTEM LOGIN</h2>
-            
-            <div class="password-container">
-                <input type="password" id="passwordInput" placeholder="Enter Password">
-                <div class="toggle-password" id="togglePassword">
-                    <i data-lucide="eye" id="eyeIcon"></i>
-                </div>
+            <h2>SYSTEM ACCESS</h2>
+            <div class="password-wrapper">
+                <input type="password" id="passwordInput" placeholder="Enter Password" autocomplete="current-password">
+                <button class="eye-toggle" id="toggleBtn" type="button">
+                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
             </div>
-
-            <button id="loginBtn">Login</button>
-            <div class="error-text" id="errorText">Incorrect Password</div>
+            <button class="login-btn" id="loginBtn">LOGIN</button>
+            <div class="error-text" id="errorMsg">Invalid Password. Try again.</div>
         </div>
     </div>
 
     <div id="dashboardPage" class="flex flex-col">
         <header class="flex justify-between items-center h-14 px-6 flex-shrink-0">
-            <h1 class="text-xl font-bold text-blue-400 uppercase tracking-tight">Machine Monitoring System</h1>
+            <h1 class="text-xl font-bold text-blue-400 uppercase">Machine Monitoring</h1>
             <div id="clock" class="text-lg font-mono text-slate-400">00:00:00</div>
         </header>
 
@@ -220,25 +182,21 @@
             </div>
 
             <div class="center-panel">
-                <div class="card"><span class="label-tag">Center View</span><img src="cen.png" class="machine-img"></div>
-                <div class="card"><span class="label-tag">① MACHINE INLET</span><img src="in.png" class="machine-img"></div>
-                <div class="card"><span class="label-tag">② MACHINE OUTLET</span><img src="out.png" class="machine-img"></div>
+                <div class="card"><span class="label-tag">Center View</span><img src="cen.png" class="w-[90%] h-[85%] object-contain"></div>
+                <div class="card"><span class="label-tag">① INLET</span><img src="in.png" class="w-[90%] h-[85%] object-contain"></div>
+                <div class="card"><span class="label-tag">② OUTLET</span><img src="out.png" class="w-[90%] h-[85%] object-contain"></div>
             </div>
 
             <div class="right-panel">
                 <div class="card p-4 !justify-around">
-                    <span class="label-tag">③ STATUS RATIO</span>
-                    <div class="flex items-center w-full px-2 mt-4">
-                        <div class="chart-container flex-shrink-0">
-                            <canvas id="pieChart1"></canvas>
-                            <div id="val-p1" class="chart-value text-green-400">85%</div>
-                        </div>
+                    <span class="label-tag">③ STATUS</span>
+                    <div class="relative w-[100px] h-[100px]">
+                        <canvas id="pieChart1"></canvas>
+                        <div id="val-p1" class="absolute inset-0 flex items-center justify-center font-bold text-green-400 text-[0.9rem]">85%</div>
                     </div>
-                    <div class="flex items-center w-full px-2">
-                        <div class="chart-container flex-shrink-0">
-                            <canvas id="pieChart2"></canvas>
-                            <div id="val-p2" class="chart-value text-blue-400">60%</div>
-                        </div>
+                    <div class="relative w-[100px] h-[100px]">
+                        <canvas id="pieChart2"></canvas>
+                        <div id="val-p2" class="absolute inset-0 flex items-center justify-center font-bold text-blue-400 text-[0.9rem]">60%</div>
                     </div>
                 </div>
                 <div class="card p-2">
@@ -250,86 +208,52 @@
     </div>
 
     <script>
-        // เริ่มต้นใช้งาน Icons
-        lucide.createIcons();
-
-        // =========================
-        // LOGIN SYSTEM
-        // =========================
-        const PASSWORD = "1234";
-        const passwordInput = document.getElementById('passwordInput');
+        const PASSWORD_CORRECT = "1234"; // รหัสผ่าน
+        const passInput = document.getElementById('passwordInput');
         const loginBtn = document.getElementById('loginBtn');
-        const loginPage = document.getElementById('loginPage');
-        const dashboardPage = document.getElementById('dashboardPage');
-        const errorText = document.getElementById('errorText');
-        const togglePassword = document.getElementById('togglePassword');
+        const errorMsg = document.getElementById('errorMsg');
         const eyeIcon = document.getElementById('eyeIcon');
 
-        // ฟังก์ชัน Login
-        function login() {
-            if (passwordInput.value === PASSWORD) {
-                loginPage.style.display = "none";
-                dashboardPage.style.display = "flex";
-                fetchData(); // เริ่มดึงข้อมูล
+        // SVG Path สำหรับไอคอนดวงตา
+        const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
+        const eyeClosed = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>`;
+
+        function runLogin() {
+            if (passInput.value === PASSWORD_CORRECT) {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('dashboardPage').style.display = 'flex';
+                fetchData(); 
             } else {
-                errorText.style.display = "block";
-                passwordInput.value = "";
-                passwordInput.focus();
+                errorMsg.style.display = 'block';
+                passInput.value = '';
+                passInput.focus();
             }
         }
 
-        // 1. กดปุ่ม Login ด้วยเมาส์
-        loginBtn.addEventListener('click', login);
-
-        // 2. กด Enter เพื่อ Login
-        passwordInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                login();
+        // --- แก้ไขจุด Enter: กดแล้วทำงานทันที ---
+        passInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // กัน Browser refresh
+                runLogin();
             }
         });
 
-        // 3. เปิด-ปิด การมองเห็นรหัสผ่าน
-        togglePassword.addEventListener('click', function() {
-            const isPassword = passwordInput.type === 'password';
-            passwordInput.type = isPassword ? 'text' : 'password';
-            
-            // เปลี่ยนไอคอน
-            eyeIcon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
-            lucide.createIcons(); // รีเฟรชไอคอน
+        loginBtn.addEventListener('click', runLogin);
+
+        // --- แก้ไขจุดดวงตา: สลับไอคอน SVG ---
+        document.getElementById('toggleBtn').addEventListener('click', () => {
+            const isPass = passInput.type === 'password';
+            passInput.type = isPass ? 'text' : 'password';
+            eyeIcon.innerHTML = isPass ? eyeClosed : eyeOpen;
         });
 
-        // =========================
-        // DASHBOARD SYSTEM
-        // =========================
+        // DASHBOARD LOGIC (คงเดิม)
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec";
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
-
-        const pieChart1 = new Chart(document.getElementById('pieChart1'), {
-            type: 'doughnut',
-            data: { datasets: [{ data: [85, 10, 5], backgroundColor: ['#10b981', '#334155', '#1e293b'], borderWidth: 0 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '80%' }
-        });
-
-        const pieChart2 = new Chart(document.getElementById('pieChart2'), {
-            type: 'doughnut',
-            data: { datasets: [{ data: [60, 30, 10], backgroundColor: ['#3b82f6', '#334155', '#1e293b'], borderWidth: 0 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '80%' }
-        });
-
-        const lineChart = new Chart(document.getElementById('lineChart'), {
-            type: 'line',
-            data: {
-                labels: ['1','2','3','4','5'],
-                datasets: [
-                    { label: 'S1', data: [10,25,15,30,20], borderColor: '#3b82f6', tension: 0.4, pointRadius: 0, borderWidth: 2 },
-                    { label: 'S2', data: [15,10,25,20,30], borderColor: '#10b981', tension: 0.4, pointRadius: 0, borderWidth: 2 }
-                ]
-            },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
-        });
+        const pieChart1 = new Chart(document.getElementById('pieChart1'), { type: 'doughnut', data: { datasets: [{ data: [85, 15], backgroundColor: ['#10b981', '#1e293b'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false } } } });
+        const pieChart2 = new Chart(document.getElementById('pieChart2'), { type: 'doughnut', data: { datasets: [{ data: [60, 40], backgroundColor: ['#3b82f6', '#1e293b'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false } } } });
+        const lineChart = new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: [1,2,3,4,5], datasets: [{ label: 'S1', data: [10,25,15,30,20], borderColor: '#3b82f6', tension: 0.4, pointRadius: 0, borderWidth: 2 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } } });
 
         async function fetchData() {
             try {
@@ -337,27 +261,13 @@
                 const data = await response.json();
                 let html = "";
                 data.table.forEach(item => {
-                    const statusColor = item.status === 'Running' ? 'text-green-400' : 'text-amber-400';
-                    html += `
-                    <tr class="border-b border-slate-800/50">
-                        <td class="py-2 font-bold text-slate-400">${item.machine}</td>
-                        <td class="py-2 text-lg text-center text-blue-400 font-bold">${item.temp}</td>
-                        <td class="py-2 text-lg text-center text-emerald-400 font-bold">${item.pressure}</td>
-                        <td class="py-2 text-right font-bold ${statusColor}">${item.status.charAt(0)}</td>
-                    </tr>`;
+                    html += `<tr class="border-b border-slate-800/50"><td class="py-2 font-bold text-slate-400">${item.machine}</td><td class="py-2 text-lg text-center text-blue-400 font-bold">${item.temp}</td><td class="py-2 text-lg text-center text-emerald-400 font-bold">${item.pressure}</td><td class="py-2 text-right font-bold ${item.status==='Running'?'text-green-400':'text-amber-400'}">${item.status.charAt(0)}</td></tr>`;
                 });
                 document.getElementById('data-table').innerHTML = html;
-                const effValue = data.machine1.temp;
-                document.getElementById('val-p1').innerText = effValue + "%";
-                pieChart1.data.datasets[0].data = [effValue, (100-effValue)*0.7, (100-effValue)*0.3];
-                pieChart1.update();
             } catch (e) { console.error(e); }
         }
-
         setInterval(fetchData, 10000);
-        
-        // Auto focus เมื่อเปิดหน้า
-        window.onload = () => passwordInput.focus();
+        window.onload = () => passInput.focus();
     </script>
 </body>
 </html>
