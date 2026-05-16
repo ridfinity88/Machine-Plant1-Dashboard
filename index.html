@@ -197,6 +197,7 @@
 
     let rawSheetData = [];
     let isInitialLoad = true;
+    let selectedItemForDashboard = null; // ตัวแปรสำหรับเก็บข้อมูลรายชื่อที่ถูกกดเลือกใช้งานล่าสุด
 
     function togglePass() {
         const input = document.getElementById('passInput');
@@ -224,6 +225,7 @@
     }
 
     function openPopup(item) {
+        selectedItemForDashboard = item; // จัดเก็บ Object ข้อมูลพนักงานลงในตัวแปร Global
         document.getElementById('popupName').innerText = item.name;
         document.getElementById('popupDetail').innerText = item.columnC ? item.columnC : "-";
         document.getElementById('dashboardBtn').innerText = `${item.name} Dashboard`;
@@ -232,8 +234,40 @@
 
     function closeInfo() { document.getElementById('infoOverlay').style.display = 'none'; }
     
-    function goToDashboard() {
-        window.location.href = "dashboard afo/index.html";
+    async function goToDashboard() {
+        if (!selectedItemForDashboard || !selectedItemForDashboard.name) {
+            window.location.href = "Dashboard404/index.html";
+            return;
+        }
+
+        // ตัดช่องว่างหน้าหลังชื่อออก เพื่อป้องกันปัญหาเว้นวรรคในชื่อโฟลเดอร์
+        const targetFolderName = selectedItemForDashboard.name.trim(); 
+        const targetUrl = `${targetFolderName}/index.html`;
+        const fallbackUrl = "Dashboard404/index.html";
+
+        // แสดงสถานะเช็กเงื่อนไขระบบชั่วคราวที่ปุ่ม
+        const btn = document.getElementById('dashboardBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "Checking Repository...";
+        btn.disabled = true;
+
+        try {
+            /* 
+               ทำการ Fetch ข้อมูลแบบ HEAD request ไปที่ Path เป้าหมายบน Repository ของคุณ
+               วิธีนี้เป็นมาตรฐานที่เร็วและดีที่สุด เนื่องจากตรวจสอบว่ามีไฟล์อยู่จริงหรือไม่ 
+               โดยเบราว์เซอร์จะไม่โหลดข้อมูลขนาดของหน้าเว็บย่อยนั้นลงมาจริง ๆ
+            */
+            const response = await fetch(targetUrl, { method: 'HEAD' });
+            
+            if (response.ok) {
+                window.location.href = targetUrl;
+            } else {
+                window.location.href = fallbackUrl;
+            }
+        } catch (error) {
+            // หากเกิดข้อผิดพลาดในการเชื่อมต่อ หรือไม่พบ Path นั้น ให้ลิงก์ไปหน้า 404 ทันที
+            window.location.href = fallbackUrl;
+        }
     }
 
     // --- DATA HANDLING ---
