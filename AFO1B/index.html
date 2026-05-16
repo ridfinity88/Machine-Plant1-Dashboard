@@ -7,22 +7,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* สลับสัดส่วนความกว้างให้สอดคล้องกับตำแหน่งใหม่ */
-        :root { --width-col-left: 0.6fr; --width-col-center: 1.2fr; --width-col-right: 1.0fr; }
-        body { background: #000; color: #fff; margin: 0; overflow: hidden; font-family: sans-serif; }
+        /* จัดอัตราส่วน 3 คอลัมน์หลักให้สมดุลและกระชับ */
+        :root { --width-col-left: 0.7fr; --width-col-center: 0.9fr; --width-col-right: 1.4fr; }
+        body { background: #0f172a; color: #fff; margin: 0; overflow: hidden; font-family: sans-serif; }
         
         /* สไตล์หน้า Login */
         #loginPage { position: fixed; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { width: 320px; background: #0f172a; padding: 30px; border-radius: 16px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 15px; }
+        .login-box { width: 320px; background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 15px; }
         .input-group { position: relative; width: 100%; }
         .login-box input { width: 100%; height: 45px; background: #020617; border: 1px solid #334155; border-radius: 8px; color: #fff; padding: 0 40px 0 12px; outline: none; }
         .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; }
         .login-btn { width: 100%; height: 45px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .error-text { color: #f87171; font-size: 13px; text-align: center; display: none; }
 
-        #dashboardPage { display: none; flex-direction: column; height: 100vh; }
-        .dashboard-container { display: grid; grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right); gap: 1rem; padding: 1rem; height: calc(100vh - 60px); }
-        .card { background: #000; border: 1px solid #334155; border-radius: 12px; position: relative; }
+        #dashboardPage { display: none; flex-direction: column; height: 100vh; background: #0b0f19; }
+        .dashboard-container { display: grid; grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right); gap: 0.75rem; padding: 0.75rem; height: calc(100vh - 60px); }
+        .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; position: relative; }
 
         /* Animation สำหรับไอคอนโหลด */
         .spin { animation: spin 1s linear infinite; display: inline-block; }
@@ -31,6 +31,11 @@
         /* แถวข้อมูลกระพริบตอนอัปเดต */
         .row-update { animation: highlight 1s ease-out; }
         @keyframes highlight { 0% { background: rgba(59, 130, 246, 0.2); } 100% { background: transparent; } }
+
+        /* การ์ดเกจย่อยฝั่งขวา */
+        .gauge-card { background: #182235; border: 1px solid #233149; border-radius: 10px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: space-between; }
+        .gauge-container { position: relative; width: 100%; max-width: 150px; margin: 0 auto; }
+        .gauge-center-text { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-top: 25px; }
     </style>
 </head>
 <body>
@@ -48,68 +53,139 @@
     </div>
 
     <div id="dashboardPage">
-        <header class="flex justify-between items-center h-14 px-6 border-b border-slate-800">
-            <h1 class="text-blue-400 font-bold tracking-tight text-lg">MACHINE MONITORING</h1>
-            <div class="flex items-center gap-3">
-                <div id="clock" class="font-mono text-slate-400 text-lg">00:00:00</div>
-                <div id="syncStatus" class="text-xl">
-                    <span class="text-green-500">✅</span>
+        <header class="flex justify-between items-center h-14 px-6 border-b border-slate-800 bg-[#111827]">
+            <div>
+                <h1 class="text-slate-200 font-bold tracking-wide text-base flex items-center gap-2">⚡ Monitoring Dashboard</h1>
+                <p class="text-[10px] text-slate-500">ระบบติดตามสถานะการทำงาน (ชั่วโมง, กระแสไฟฟ้า, ความร้อน)</p>
+            </div>
+            <div class="flex items-center gap-5">
+                <div class="flex items-center gap-3 text-[11px] font-bold">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#10b981]"></span> ปกติ</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#f59e0b]"></span> เตือน</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#ef4444]"></span> ผิดปกติ</span>
                 </div>
+                <div id="clock" class="font-mono text-slate-400 text-sm">00:00:00</div>
+                <div id="syncStatus" class="text-base"><span class="text-green-500">✅</span></div>
             </div>
         </header>
 
         <main class="dashboard-container">
-            <!-- คอลัมน์ซ้าย: นำข้อมูลตาราง Real-time มาใส่ทั้งการ์ดบน และการ์ดล่าง -->
-            <div class="grid grid-rows-2 gap-4">
-                <!-- การ์ดซ้ายบน -->
-                <div class="card p-4 overflow-hidden">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">⑤ Data Real-time (Top)</span>
+            <div class="grid grid-rows-2 gap-3">
+                <div class="card p-3 overflow-hidden bg-[#111625] border-[#1e2640]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">⑤ Data Real-time (Top)</span>
                     </div>
-                    <table class="w-full text-[12px]">
-                        <thead class="text-blue-300 border-b border-slate-800 text-left">
+                    <table class="w-full text-[11px]">
+                        <thead class="text-blue-400 border-b border-slate-800 text-left">
                             <tr>
-                                <th class="pb-2">Name</th>
-                                <th class="text-center pb-2">Temp</th>
-                                <th class="text-center pb-2">Press</th>
-                                <th class="text-right pb-2">Status</th>
+                                <th class="pb-1">Name</th>
+                                <th class="text-center pb-1">Temp</th>
+                                <th class="text-center pb-1">Press</th>
+                                <th class="text-right pb-1">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="data-table-top">
-                        </tbody>
+                        <tbody id="data-table-top"></tbody>
                     </table>
                 </div>
 
-                <!-- การ์ดซ้ายล่าง -->
-                <div class="card p-4 overflow-hidden">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">⑤ Data Real-time (Bottom)</span>
+                <div class="card p-3 overflow-hidden bg-[#111625] border-[#1e2640]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">⑤ Data Real-time (Bottom)</span>
                     </div>
-                    <table class="w-full text-[12px]">
-                        <thead class="text-blue-300 border-b border-slate-800 text-left">
+                    <table class="w-full text-[11px]">
+                        <thead class="text-blue-400 border-b border-slate-800 text-left">
                             <tr>
-                                <th class="pb-2">Name</th>
-                                <th class="text-center pb-2">Temp</th>
-                                <th class="text-center pb-2">Press</th>
-                                <th class="text-right pb-2">Status</th>
+                                <th class="pb-1">Name</th>
+                                <th class="text-center pb-1">Temp</th>
+                                <th class="text-center pb-1">Press</th>
+                                <th class="text-right pb-1">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="data-table-bottom">
-                        </tbody>
+                        <tbody id="data-table-bottom"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- คอลัมน์กลาง: รูปภาพแสดงผล คงตำแหน่งเดิม -->
-            <div class="grid grid-rows-3 gap-4">
-                <div class="card flex items-center justify-center"><img src="cen.png" class="max-h-[85%]"></div>
-                <div class="card flex items-center justify-center"><img src="in.png" class="max-h-[85%]"></div>
-                <div class="card flex items-center justify-center"><img src="out.png" class="max-h-[85%]"></div>
+            <div class="grid grid-rows-3 gap-3">
+                <div class="card flex items-center justify-center bg-[#111625] border-[#1e2640]"><img src="cen.png" class="max-h-[85%]"></div>
+                <div class="card flex items-center justify-center bg-[#111625] border-[#1e2640]"><img src="in.png" class="max-h-[85%]"></div>
+                <div class="card flex items-center justify-center bg-[#111625] border-[#1e2640]"><img src="out.png" class="max-h-[85%]"></div>
             </div>
 
-            <!-- คอลัมน์ขวา: การ์ดเปล่า เว้นว่างไว้ก่อนตามต้องการ -->
-            <div class="card p-4 overflow-hidden flex items-center justify-center">
-                <span class="text-slate-600 text-xs font-bold uppercase tracking-widest">Empty Card</span>
+            <div class="grid grid-cols-2 grid-rows-3 gap-3">
+                
+                <div class="gauge-card">
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 1 (ชั่วโมง)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="gauge-container">
+                        <canvas id="gauge-hr1"></canvas>
+                        <div class="gauge-center-text">
+                            <span id="val-hr1" class="text-xl font-bold tracking-tight">1158</span>
+                            <span class="text-[9px] text-slate-400">ชั่วโมง</span>
+                        </div>
+                    </div>
+                    <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● สถานะ ปกติ</span></div>
+                </div>
+
+                <div class="gauge-card">
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 2 (ชั่วโมง)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="gauge-container">
+                        <canvas id="gauge-hr2"></canvas>
+                        <div class="gauge-center-text">
+                            <span id="val-hr2" class="text-xl font-bold tracking-tight">852</span>
+                            <span class="text-[9px] text-slate-400">ชั่วโมง</span>
+                        </div>
+                    </div>
+                    <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● สถานะ ปกติ</span></div>
+                </div>
+
+                <div class="gauge-card">
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 1 (Current)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="gauge-container">
+                        <canvas id="gauge-cur1"></canvas>
+                        <div class="gauge-center-text">
+                            <span id="val-cur1" class="text-xl font-bold tracking-tight">2.06</span>
+                            <span class="text-[9px] text-slate-400">แอมป์ (A)</span>
+                        </div>
+                    </div>
+                    <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● สถานะ ปกติ</span></div>
+                </div>
+
+                <div class="gauge-card">
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 2 (Current)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="gauge-container">
+                        <canvas id="gauge-cur2"></canvas>
+                        <div class="gauge-center-text">
+                            <span id="val-cur2" class="text-xl font-bold tracking-tight">2.05</span>
+                            <span class="text-[9px] text-slate-400">แอมป์ (A)</span>
+                        </div>
+                    </div>
+                    <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● สถานะ ปกติ</span></div>
+                </div>
+
+                <div class="gauge-card">
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 1 (Temp)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="gauge-container">
+                        <canvas id="gauge-temp1"></canvas>
+                        <div class="gauge-center-text">
+                            <span id="val-temp1" class="text-xl font-bold tracking-tight">250</span>
+                            <span class="text-[9px] text-slate-400">องศาเซลเซียส</span>
+                        </div>
+                    </div>
+                    <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● สถานะ ปกติ</span></div>
+                </div>
+
+                <div class="gauge-card">
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 2 (Temp)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="gauge-container">
+                        <canvas id="gauge-temp2"></canvas>
+                        <div class="gauge-center-text">
+                            <span id="val-temp2" class="text-xl font-bold tracking-tight">248</span>
+                            <span class="text-[9px] text-slate-400">องศาเซลเซียส</span>
+                        </div>
+                    </div>
+                    <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● สถานะ ปกติ</span></div>
+                </div>
+
             </div>
         </main>
     </div>
@@ -117,6 +193,8 @@
     <script>
         const MY_PASS = "1234";
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec";
+        
+        let charts = {};
 
         // --- ระบบ Login ---
         function handleEnter(e) { if (e.key === 'Enter') checkLogin(); }
@@ -128,11 +206,11 @@
             icon.innerText = (input.type === "password") ? "👁️" : "🙈";
         }
 
-        // ตรวจสอบ Login
         function checkLogin() {
             if (document.getElementById('passInput').value === MY_PASS) {
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('dashboardPage').style.display = 'flex';
+                initGauges();
                 startServices();
             } else {
                 document.getElementById('errorTxt').style.display = 'block';
@@ -141,31 +219,110 @@
             }
         }
 
+        // --- ระบบการจัดการเกจวัด (Chart.js Plugins) ---
+        function createGauge(canvasId, type) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            // ตั้งค่าเซกเมนต์สัดส่วนตามประเภทของกราฟตามรูปแนบ
+            let dataSegments = [70, 15, 15]; // ปกติ (ชั่วโมง/ความร้อน): เขียวเยอะ
+            let segmentColors = ['#10b981', '#f59e0b', '#ef4444'];
+            
+            if (type === 'current') {
+                dataSegments = [20, 20, 20, 20, 20]; // สไตล์สลับแถบสีของ Current
+                segmentColors = ['#ef4444', '#f59e0b', '#10b981', '#f59e0b', '#ef4444'];
+            }
+
+            return new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: dataSegments,
+                        backgroundColor: segmentColors,
+                        borderWidth: 0,
+                        needleValue: 0
+                    }]
+                },
+                options: {
+                    rotation: -90,
+                    circumference: 180,
+                    cutout: '80%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { tooltip: { enabled: false }, legend: { display: false } },
+                    layout: { padding: { bottom: 5 } }
+                },
+                plugins: [{
+                    id: 'gaugeNeedle',
+                    afterDatasetsDraw(chart) {
+                        const { ctx, data } = chart;
+                        const score = data.datasets[0].needleValue;
+                        const meta = chart.getDatasetMeta(0);
+                        const startAngle = meta.data[0].startAngle;
+                        const totalCircumference = Math.PI;
+                        
+                        // คำนวณองศาของจุดชี้ตามสเกลข้อมูลจริง
+                        let factor = 0;
+                        if (type === 'hr') factor = score / 1500;
+                        else if (type === 'current') factor = score / 4;
+                        else if (type === 'temp') factor = score / 350;
+
+                        if (factor > 1) factor = 1; if (factor < 0) factor = 0;
+
+                        const targetAngle = startAngle + (factor * totalCircumference);
+                        const cx = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
+                        const cy = chart.chartArea.bottom - 4;
+                        const radius = (meta.data[0].outerRadius + meta.data[0].innerRadius) / 2;
+                        
+                        const nx = cx + radius * Math.cos(targetAngle);
+                        const ny = cy + radius * Math.sin(targetAngle);
+
+                        // วาดปุ่มกลมชี้ตำแหน่งค่าบนหน้าปัด (มีไอคอนจำลองด้านใน)
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(nx, ny, 7, 0, 2 * Math.PI);
+                        ctx.fillStyle = '#222f47';
+                        ctx.fill();
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.arc(nx, ny, 3, 0, 2 * Math.PI);
+                        ctx.fillStyle = '#f59e0b';
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        function initGauges() {
+            charts['hr1'] = createGauge('gauge-hr1', 'hr');
+            charts['hr2'] = createGauge('gauge-hr2', 'hr');
+            charts['cur1'] = createGauge('gauge-cur1', 'current');
+            charts['cur2'] = createGauge('gauge-cur2', 'current');
+            charts['temp1'] = createGauge('gauge-temp1', 'temp');
+            charts['temp2'] = createGauge('gauge-temp2', 'temp');
+        }
+
         // --- ระบบการทำงาน Dashboard ---
         function startServices() {
-            // นาฬิกา
             setInterval(() => {
                 document.getElementById('clock').innerText = new Date().toLocaleTimeString();
             }, 1000);
 
-            // โหลดข้อมูลครั้งแรก
             fetchData();
-            
-            // ตั้ง Auto-Refresh ทุก 10 วินาที
             setInterval(fetchData, 10000);
         }
 
-        // ดึงข้อมูลและอัปเดตลงตารางทั้ง 2 ฝั่งซ้าย
         async function fetchData() {
             const statusBox = document.getElementById('syncStatus');
             const tableTop = document.getElementById('data-table-top');
             const tableBottom = document.getElementById('data-table-bottom');
             
-            // 1. แสดงไอคอนกำลังโหลด (หมุนๆ)
-            statusBox.innerHTML = '<span class="spin text-blue-400 text-lg">⚙️</span>';
+            statusBox.innerHTML = '<span class="spin text-blue-400 text-sm">⚙️</span>';
 
             try {
-                // เติม nocache เพื่อป้องกัน browser จำค่าเก่า
                 const finalUrl = `${SCRIPT_URL}?t=${new Date().getTime()}`;
                 const response = await fetch(finalUrl);
                 const data = await response.json();
@@ -176,23 +333,37 @@
                         const statusColor = (item.status === 'Running' || item.status === 'OK') ? 'text-green-400' : 'text-amber-400';
                         html += `
                             <tr class="border-b border-slate-900 row-update">
-                                <td class="py-3 text-slate-300 font-bold">${item.machine}</td>
+                                <td class="py-2 text-slate-300 font-bold">${item.machine}</td>
                                 <td class="text-center text-blue-400 font-bold">${item.temp}</td>
                                 <td class="text-center text-green-400 font-bold">${item.pressure}</td>
                                 <td class="text-right font-bold ${statusColor}">${item.status}</td>
                             </tr>`;
                     });
                     
-                    // กระจายข้อมูลชุดเดียวกันลงไปทั้งการ์ดบนและการ์ดล่าง
                     tableTop.innerHTML = html;
                     tableBottom.innerHTML = html;
 
-                    // 2. เมื่อสำเร็จ เปลี่ยนเป็นไอคอนเครื่องหมายถูกสีเขียว
+                    // อัปเดตและจำลองตำแหน่งเข็มเกจ (Mapping ข้อมูลคงที่ตามรูปภาพตัวอย่างของคุณ)
+                    updateGaugeValue('hr1', 1158, 'val-hr1');
+                    updateGaugeValue('hr2', 852, 'val-hr2');
+                    updateGaugeValue('cur1', 2.06, 'val-cur1', true);
+                    updateGaugeValue('cur2', 2.05, 'val-cur2', true);
+                    updateGaugeValue('temp1', 250, 'val-temp1');
+                    updateGaugeValue('temp2', 248, 'val-temp2');
+
                     statusBox.innerHTML = '<span class="text-green-500">✅</span>';
                 }
             } catch (error) {
                 console.error("Fetch Error:", error);
                 statusBox.innerHTML = '<span class="text-red-500">❌</span>';
+            }
+        }
+
+        function updateGaugeValue(key, value, textId, isFloat = false) {
+            document.getElementById(textId).innerText = isFloat ? value.toFixed(2) : value;
+            if (charts[key]) {
+                charts[key].data.datasets[0].needleValue = value;
+                charts[key].update();
             }
         }
 
