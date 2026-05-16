@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Machine Dashboard - Realtime</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --width-col-left: 1.0fr; --width-col-center: 1.2fr; --width-col-right: 0.6fr; }
+        /* สลับสัดส่วนความกว้างให้สอดคล้องกับตำแหน่งใหม่ */
+        :root { --width-col-left: 0.6fr; --width-col-center: 1.2fr; --width-col-right: 1.0fr; }
         body { background: #000; color: #fff; margin: 0; overflow: hidden; font-family: sans-serif; }
         
         /* สไตล์หน้า Login */
@@ -59,6 +59,23 @@
         </header>
 
         <main class="dashboard-container">
+            <!-- คอลัมน์ซ้าย (เดิมอยู่ขวา): การ์ด Canvas กราฟ 2 อัน -->
+            <div class="grid grid-rows-2 gap-4">
+                <div class="card p-4 flex flex-col items-center justify-around">
+                    <canvas id="p1" width="80" height="80"></canvas>
+                    <canvas id="p2" width="80" height="80"></canvas>
+                </div>
+                <div class="card p-4"><canvas id="lineChart"></canvas></div>
+            </div>
+
+            <!-- คอลัมน์กลาง: รูปภาพแสดงผล คงตำแหน่งเดิม -->
+            <div class="grid grid-rows-3 gap-4">
+                <div class="card flex items-center justify-center"><img src="cen.png" class="max-h-[85%]"></div>
+                <div class="card flex items-center justify-center"><img src="in.png" class="max-h-[85%]"></div>
+                <div class="card flex items-center justify-center"><img src="out.png" class="max-h-[85%]"></div>
+            </div>
+
+            <!-- คอลัมน์ขวา (เดิมอยู่ซ้าย): ตารางข้อมูล Data Real-time -->
             <div class="card p-4 overflow-hidden">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">⑤ Data Real-time</span>
@@ -73,22 +90,8 @@
                         </tr>
                     </thead>
                     <tbody id="data-table">
-                        </tbody>
+                    </tbody>
                 </table>
-            </div>
-
-            <div class="grid grid-rows-3 gap-4">
-                <div class="card flex items-center justify-center"><img src="cen.png" class="max-h-[85%]"></div>
-                <div class="card flex items-center justify-center"><img src="in.png" class="max-h-[85%]"></div>
-                <div class="card flex items-center justify-center"><img src="out.png" class="max-h-[85%]"></div>
-            </div>
-
-            <div class="grid grid-rows-2 gap-4">
-                <div class="card p-4 flex flex-col items-center justify-around">
-                    <canvas id="p1" width="80" height="80"></canvas>
-                    <canvas id="p2" width="80" height="80"></canvas>
-                </div>
-                <div class="card p-4"><canvas id="lineChart"></canvas></div>
             </div>
         </main>
     </div>
