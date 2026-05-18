@@ -88,20 +88,25 @@
         .gauge-container { 
             position: relative; 
             width: 100%; 
-            max-width: 155px; 
+            max-width: 165px; /* ขยายขนาดกรอบเพื่อให้เห็นสเกลสีชัดขึ้น */
             margin: auto; 
             display: flex;
             align-items: center;
             justify-content: center;
         }
+        
+        /* 🛠️ ปรับแต่งให้ตัวเลขอยู่กึ่งกลางวงกลมอย่างสมบูรณ์แบบ */
         .gauge-center-text { 
             position: absolute; 
-            inset: 0; 
+            bottom: 4px; /* ดันให้อยู่ระนาบจุดศูนย์กลางของครึ่งวงกลมพอดี */
+            left: 0;
+            right: 0;
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
-            padding-top: 25px; 
+            text-align: center;
+            z-index: 1; /* นำข้อความมาอยู่เหนือเส้นเข็มวัดเพื่อความชัดเจน */
         }
     </style>
 </head>
@@ -192,7 +197,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-hr1"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-hr1" class="text-2xl font-black tracking-tight text-white font-mono">1158</span>
+                            <span id="val-hr1" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">1158</span>
                             <span class="text-[9px] text-gray-400 mt-0.5">ชั่วโมง</span>
                         </div>
                     </div>
@@ -205,7 +210,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-hr2"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-hr2" class="text-2xl font-black tracking-tight text-white font-mono">852</span>
+                            <span id="val-hr2" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">852</span>
                             <span class="text-[9px] text-gray-400 mt-0.5">ชั่วโมง</span>
                         </div>
                     </div>
@@ -218,7 +223,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-cur1"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-cur1" class="text-2xl font-black tracking-tight text-white font-mono">2.06</span>
+                            <span id="val-cur1" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">2.06</span>
                             <span class="text-[9px] text-gray-400 mt-0.5">แอมป์ (A)</span>
                         </div>
                     </div>
@@ -231,7 +236,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-cur2"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-cur2" class="text-2xl font-black tracking-tight text-white font-mono">2.05</span>
+                            <span id="val-cur2" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">2.05</span>
                             <span class="text-[9px] text-gray-400 mt-0.5">แอมป์ (A)</span>
                         </div>
                     </div>
@@ -244,7 +249,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-temp1"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-temp1" class="text-2xl font-black tracking-tight text-white font-mono">250</span>
+                            <span id="val-temp1" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">250</span>
                             <span class="text-[9px] text-gray-400 mt-0.5">องศาเซลเซียส</span>
                         </div>
                     </div>
@@ -257,7 +262,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-temp2"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-temp2" class="text-2xl font-black tracking-tight text-white font-mono">248</span>
+                            <span id="val-temp2" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">248</span>
                             <span class="text-[9px] text-gray-400 mt-0.5">องศาเซลเซียส</span>
                         </div>
                     </div>
@@ -318,13 +323,12 @@
             let maxVal = 100;
             let zones = [];
             
-            // ออกแบบช่วงข้อมูลและสเกลจำกัดสูงสุด
             if (type === 'hr') {
                 maxVal = 1700;
                 zones = [
-                    { limit: 1200, color: '#10b981' }, // เขียวสด
-                    { limit: 1450, color: '#f59e0b' }, // เหลืองส้ม
-                    { limit: 1700, color: '#ef4444' }  // แดง
+                    { limit: 1200, color: '#10b981' }, 
+                    { limit: 1450, color: '#f59e0b' }, 
+                    { limit: 1700, color: '#ef4444' }  
                 ];
             } else if (type === 'current') {
                 maxVal = 4.0;
@@ -346,7 +350,6 @@
                 ];
             }
 
-            // ใช้โครงสร้าง Doughnut พื้นฐานแบบโปร่งแสง เพื่อเปิดทางให้ลากเส้น Custom Arc และเข็มเรืองแสงเอง
             return new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -360,11 +363,11 @@
                 options: {
                     rotation: -90,
                     circumference: 180,
-                    cutout: '88%',
+                    cutout: '75%', /* 🛠️ ปรับลดจาก 88% เป็น 75% เพื่อขยายแถบสเกลสีให้มีขนาดใหญ่ หนา และเห็นชัดเจนขึ้น */
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: { tooltip: { enabled: false }, legend: { display: false } },
-                    layout: { padding: { top: 10, bottom: 12, left: 10, right: 10 } }
+                    layout: { padding: { top: 10, bottom: 15, left: 10, right: 10 } }
                 },
                 plugins: [{
                     id: 'futuristicGauge',
@@ -381,7 +384,7 @@
 
                         ctx.save();
 
-                        // 1. วาดเส้นพื้นหลังหน้าปัดสีเทาเข้มแบบล้ำๆ (Background Track)
+                        // 1. วาดเส้นพื้นหลังหน้าปัด (Background Track)
                         ctx.beginPath();
                         ctx.arc(cx, cy, centerR, -Math.PI, 0, false);
                         ctx.strokeStyle = '#161920';
@@ -389,9 +392,8 @@
                         ctx.lineCap = 'round';
                         ctx.stroke();
 
-                        // 2. วาดขอบแถบสีตาม Zone (Indicator Arc) บนพิกัดกึ่งกลาง
+                        // 2. วาดขอบแถบสีตาม Zone จริง (หนาและเด่นชัดขึ้น)
                         let startAngle = -Math.PI;
-                        let lastLimit = 0;
                         
                         zones.forEach(zone => {
                             let endFactor = zone.limit / maxVal;
@@ -399,9 +401,9 @@
                             let endAngle = -Math.PI + (endFactor * Math.PI);
                             
                             ctx.beginPath();
-                            ctx.arc(cx, cy, outerR + 3, startAngle, endAngle, false);
-                            ctx.strokeStyle = zone.color + '33'; // โปร่งแสง 20% สำหรับ Background เส้นขอบ
-                            ctx.lineWidth = 2;
+                            ctx.arc(cx, cy, centerR, startAngle, endAngle, false);
+                            ctx.strokeStyle = zone.color;
+                            ctx.lineWidth = trackWidth; /* 🛠️ บังคับความหนาของสีโซนให้เต็มแทร็คหลัก เพื่อให้สเกลสีใหญ่สะใจ */
                             ctx.stroke();
                             
                             startAngle = endAngle;
@@ -412,7 +414,6 @@
                         if (factor > 1) factor = 1; if (factor < 0) factor = 0;
                         const needleAngle = -Math.PI + (factor * Math.PI);
 
-                        // ค้นหาสีเข็มตาม Zone จริงของค่าที่อ่านได้มา ณ ปัจจุบัน
                         let activeColor = '#2196F3';
                         for (let i = 0; i < zones.length; i++) {
                             if (score <= zones[i].limit) {
@@ -423,21 +424,21 @@
 
                         // 4. วาดตัวชี้แบบ Laser Line + Glow Pointer Head
                         ctx.beginPath();
-                        ctx.moveTo(cx + (innerR - 4) * Math.cos(needleAngle), cy + (innerR - 4) * Math.sin(needleAngle));
-                        ctx.lineTo(cx + (outerR + 2) * Math.cos(needleAngle), cy + (outerR + 2) * Math.sin(needleAngle));
-                        ctx.strokeStyle = activeColor;
+                        ctx.moveTo(cx + (innerR - 2) * Math.cos(needleAngle), cy + (innerR - 2) * Math.sin(needleAngle));
+                        ctx.lineTo(cx + (outerR + 5) * Math.cos(needleAngle), cy + (outerR + 5) * Math.sin(needleAngle));
+                        ctx.strokeStyle = '#fff'; /* 🛠️ เปลี่ยนสีแกนเข็มหลักเป็นสีขาวตัดกับแถบสีที่หนาขึ้น */
                         ctx.lineWidth = 3;
                         ctx.lineCap = 'round';
                         ctx.stroke();
 
                         // วาดจุดหัวนำสายตาแบบเรืองแสง (Glow Node) ที่ปลายเข็ม
-                        const nodeX = cx + (outerR + 2) * Math.cos(needleAngle);
-                        const nodeY = cy + (outerR + 2) * Math.sin(needleAngle);
+                        const nodeX = cx + (outerR + 5) * Math.cos(needleAngle);
+                        const nodeY = cy + (outerR + 5) * Math.sin(needleAngle);
                         
                         ctx.beginPath();
-                        ctx.arc(nodeX, nodeY, 4, 0, 2 * Math.PI);
-                        ctx.fillStyle = '#fff';
-                        ctx.shadowBlur = 8;
+                        ctx.arc(nodeX, nodeY, 5, 0, 2 * Math.PI);
+                        ctx.fillStyle = activeColor;
+                        ctx.shadowBlur = 10;
                         ctx.shadowColor = activeColor;
                         ctx.fill();
 
@@ -477,14 +478,12 @@
                 const response = await fetch(finalUrl);
                 const data = await response.json();
                 
-                // ฟังก์ชันสำหรับแปลงค่าข้อความให้เป็นตัวเลขเพื่อใช้เปรียบเทียบความถูกต้อง
                 const parseNum = (val) => {
                     if (val === undefined || val === null) return NaN;
                     let s = String(val).replace(/[^\d.-]/g, '');
                     return parseFloat(s);
                 };
 
-                // เจาะจงฟังก์ชันหาค่า Real Time Data จาก Array Object ค้นหาแบบไม่สนเว้นวรรค/ตัวพิมพ์เล็กใหญ่
                 const findRealtimeValue = (dataArray, targetName) => {
                     if (!dataArray || !Array.isArray(dataArray)) return null;
                     const cleanTarget = String(targetName).replace(/\s+/g, '').toLowerCase();
@@ -502,17 +501,15 @@
                         let rtNum = parseNum(item.realtime);
                         let nmNum = parseNum(item.normal);
                         
-                        // กำหนดสีเริ่มต้นในกรณีเปรียบเทียบตัวเลขไม่ได้ ให้เป็นสีฟ้าเดิม
                         let realtimeColor = "text-blue-400"; 
                         
                         if (!isNaN(rtNum) && !isNaN(nmNum)) {
                             if (rtNum === nmNum) {
-                                realtimeColor = "text-green-500"; // ตรงกันเป็นสีเขียว
+                                realtimeColor = "text-green-500";
                             } else {
-                                realtimeColor = "text-red-500";   // น้อยกว่าหรือมากกว่าเป็นสีแดง
+                                realtimeColor = "text-red-500";
                             }
                         } else if (item.realtime && item.normal) {
-                            // กรณีข้อมูลเป็นข้อความตัวอักษร ให้เทียบ String ตรงๆ
                             let rtStr = String(item.realtime).trim().toLowerCase();
                             let nmStr = String(item.normal).trim().toLowerCase();
                             realtimeColor = (rtStr === nmStr) ? "text-green-500" : "text-red-500";
@@ -559,34 +556,27 @@
                     tableBottom.innerHTML = htmlBottom;
                 }
 
-                // --- อัปเดตค่าเข้าหลอดเกจทั้ง 6 ตัวตามเงื่อนไขสเกลใหม่ ---
-                
-                // 1. UPPER (Burner Time)
+                // --- อัปเดตค่าเกจวัด ---
                 const rawHr1 = findRealtimeValue(data.upperData, 'Burner Time');
                 const valHr1 = rawHr1 !== null ? parseNum(rawHr1) : 1158;
                 updateGaugeValue('hr1', isNaN(valHr1) ? 0 : valHr1, 'val-hr1');
 
-                // 2. LOWER (Burner Time)
                 const rawHr2 = findRealtimeValue(data.lowerData, 'Burner Time');
                 const valHr2 = rawHr2 !== null ? parseNum(rawHr2) : 852;
                 updateGaugeValue('hr2', isNaN(valHr2) ? 0 : valHr2, 'val-hr2');
 
-                // 3. UPPER (Current Conveyor) -> ดึงข้อมูลจาก Current Blower Box 3 ของฝั่ง UPPER
                 const rawCur1 = findRealtimeValue(data.upperData, 'Current Blower Box 3');
                 const valCur1 = rawCur1 !== null ? parseNum(rawCur1) : 2.06;
                 updateGaugeValue('cur1', isNaN(valCur1) ? 0 : valCur1, 'val-cur1', true);
 
-                // 4. LOWER (Current Conveyor) -> ดึงข้อมูลจาก Current Blower Box 2 ของฝั่ง LOWER
                 const rawCur2 = findRealtimeValue(data.lowerData, 'Current Blower Box 2');
                 const valCur2 = rawCur2 !== null ? parseNum(rawCur2) : 2.05;
                 updateGaugeValue('cur2', isNaN(valCur2) ? 0 : valCur2, 'val-cur2', true);
 
-                // 5. UPPER (Temp) -> ดึงข้อมูลจาก Temp Box 2 ของฝั่ง UPPER
                 const rawTemp1 = findRealtimeValue(data.upperData, 'Temp Box 2');
                 const valTemp1 = rawTemp1 !== null ? parseNum(rawTemp1) : 250;
                 updateGaugeValue('temp1', isNaN(valTemp1) ? 0 : valTemp1, 'val-temp1');
 
-                // 6. LOWER (Temp) -> ดึงข้อมูลจาก Temp Box 3 ของฝั่ง LOWER
                 const rawTemp2 = findRealtimeValue(data.lowerData, 'Temp Box 3');
                 const valTemp2 = rawTemp2 !== null ? parseNum(rawTemp2) : 248;
                 updateGaugeValue('temp2', isNaN(valTemp2) ? 0 : valTemp2, 'val-temp2');
