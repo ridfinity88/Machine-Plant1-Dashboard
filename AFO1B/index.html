@@ -83,13 +83,13 @@
         .gauge-container { 
             position: relative; 
             width: 100%; 
-            max-width: 135px; 
+            max-width: 145px; 
             margin: auto; /* บังคับให้อยู่กึ่งกลางแนวนอนและแนวตั้งภายในพื้นที่ที่เหลือ */
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .gauge-center-text { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-top: 24px; }
+        .gauge-center-text { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-top: 28px; }
     </style>
 </head>
 <body>
@@ -135,7 +135,8 @@
                                     <th class="text-center pb-1 pr-4 w-[28%]">Real Time Data</th>
                                     <th class="text-right pb-1 w-[22%]">ค่าปกติ</th>
                                 </tr>
-                            </table>
+                            </thead>
+                        </table>
                         <table class="w-full text-[11px]">
                             <tbody id="data-table-top"></tbody>
                         </table>
@@ -178,7 +179,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-hr1"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-hr1" class="text-xl font-bold tracking-tight">1158</span>
+                            <span id="val-hr1" class="text-xl font-black tracking-tight text-white">1158</span>
                             <span class="text-[9px] text-gray-400">ชั่วโมง</span>
                         </div>
                     </div>
@@ -191,7 +192,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-hr2"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-hr2" class="text-xl font-bold tracking-tight">852</span>
+                            <span id="val-hr2" class="text-xl font-black tracking-tight text-white">852</span>
                             <span class="text-[9px] text-gray-400">ชั่วโมง</span>
                         </div>
                     </div>
@@ -204,7 +205,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-cur1"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-cur1" class="text-xl font-bold tracking-tight">2.06</span>
+                            <span id="val-cur1" class="text-xl font-black tracking-tight text-white">2.06</span>
                             <span class="text-[9px] text-gray-400">แอมป์ (A)</span>
                         </div>
                     </div>
@@ -217,7 +218,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-cur2"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-cur2" class="text-xl font-bold tracking-tight">2.05</span>
+                            <span id="val-cur2" class="text-xl font-black tracking-tight text-white">2.05</span>
                             <span class="text-[9px] text-gray-400">แอมป์ (A)</span>
                         </div>
                     </div>
@@ -230,7 +231,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-temp1"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-temp1" class="text-xl font-bold tracking-tight">250</span>
+                            <span id="val-temp1" class="text-xl font-black tracking-tight text-white">250</span>
                             <span class="text-[9px] text-gray-400">องศาเซลเซียส</span>
                         </div>
                     </div>
@@ -243,7 +244,7 @@
                     <div class="gauge-container flex-grow mt-1">
                         <canvas id="gauge-temp2"></canvas>
                         <div class="gauge-center-text">
-                            <span id="val-temp2" class="text-xl font-bold tracking-tight">248</span>
+                            <span id="val-temp2" class="text-xl font-black tracking-tight text-white">248</span>
                             <span class="text-[9px] text-gray-400">องศาเซลเซียส</span>
                         </div>
                     </div>
@@ -301,22 +302,25 @@
         function createGauge(canvasId, type) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             
-            let dataSegments = [70, 15, 15]; 
-            let segmentColors = ['#2e7d32', '#fbc02d', '#c62828'];
+            let dataSegments = []; 
+            let segmentColors = [];
             
-            // ปรับเปลี่ยนช่วงของ Segment สีตามเงื่อนไขใหม่ที่กำหนด
+            // 1. ตั้งค่ากลุ่ม Burner Time (0 - 1700)
             if (type === 'hr') {
-                // 0-1200 เขียว (กว้าง 1200) | 1201-1450 เหลือง (กว้าง 250) | 1451 ขึ้นไป แดง (สมมติให้กว้างสูงสุด 1500 ดังนั้น แดง = 50)
-                dataSegments = [1200, 250, 50];
+                dataSegments = [1200, 250, 250]; // เขียว: 0-1200, เหลือง: 1201-1450, แดง: 1451-1700
                 segmentColors = ['#2e7d32', '#fbc02d', '#c62828'];
-            } else if (type === 'current') {
-                // 0-1.75 แดง (1.75) | 1.76-1.94 เหลือง (0.19) | 1.95-2.25 เขียว (0.31) | 2.26-2.54 เหลือง (0.29) | 2.55 ขึ้นไป แดง (สมมติสุดที่ 3.0 แดง = 0.46)
-                dataSegments = [1.75, 0.19, 0.31, 0.29, 0.46]; 
+            }
+            // 2. ตั้งค่ากลุ่ม Current Conveyor (0 - 4.0 A) -> เขียวอยู่ตรงกลาง ขนาบด้วยเหลืองและแดง
+            else if (type === 'current') {
+                // ช่วงข้อมูล: แดงต่ำ(0-1.8) -> เหลืองต่ำ(1.8-1.95) -> เขียวปกติ(1.95-2.25) -> เหลืองสูง(2.25-2.4) -> แดงสูง(2.4-4.0)
+                dataSegments = [1.80, 0.15, 0.30, 0.15, 1.60]; 
                 segmentColors = ['#c62828', '#fbc02d', '#2e7d32', '#fbc02d', '#c62828'];
-            } else if (type === 'temp') {
-                // 0-229 แดง (229) | 230-239 เหลือง (10) | 240-255 เขียว (16) | 256 ขึ้นไป แดง (สมมติสุดที่ 300 แดง = 45)
-                dataSegments = [229, 10, 16, 45];
-                segmentColors = ['#c62828', '#fbc02d', '#2e7d32', '#c62828'];
+            }
+            // 3. ตั้งค่ากลุ่ม Temp (0 - 350 °C) -> เขียวอยู่ตรงกลาง ขนาบด้วยเหลืองและแดง
+            else if (type === 'temp') {
+                // ช่วงข้อมูล: แดงต่ำ(0-235) -> เหลืองต่ำ(235-240) -> เขียวปกติ(240-255) -> เหลืองสูง(255-260) -> แดงสูง(260-350)
+                dataSegments = [235, 5, 15, 5, 90];
+                segmentColors = ['#c62828', '#fbc02d', '#2e7d32', '#fbc02d', '#c62828'];
             }
 
             return new Chart(ctx, {
@@ -332,11 +336,11 @@
                 options: {
                     rotation: -90,
                     circumference: 180,
-                    cutout: '80%',
+                    cutout: '83%', // ปรับเส้นผ่านศูนย์กลางให้บางลง เรียบหรูสไตล์ Dashboard รุ่นใหม่
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: { tooltip: { enabled: false }, legend: { display: false } },
-                    layout: { padding: { bottom: 5 } }
+                    layout: { padding: { bottom: 6 } }
                 },
                 plugins: [{
                     id: 'gaugeNeedle',
@@ -346,13 +350,13 @@
                         const meta = chart.getDatasetMeta(0);
                         
                         let factor = 0;
-                        if (type === 'hr') factor = score / 1500; // ค่ารวมสูงสุดของสเกล (1200 + 250 + 50)
-                        else if (type === 'current') factor = score / 3.0; // ค่ารวมสูงสุดของสเกล (1.75 + 0.19 + 0.31 + 0.29 + 0.46)
-                        else if (type === 'temp') factor = score / 300; // ค่ารวมสูงสุดของสเกล (229 + 10 + 16 + 45)
+                        if (type === 'hr') factor = score / 1700;       // สเกลสูงสุดรวมเป็น 1700
+                        else if (type === 'current') factor = score / 4; // สเกลสูงสุดรวมเป็น 4.0
+                        else if (type === 'temp') factor = score / 350;  // สเกลสูงสุดรวมเป็น 350
 
                         if (factor > 1) factor = 1; if (factor < 0) factor = 0;
 
-                        // 🛠️ แก้ไขการคำนวณตำแหน่งมุมตรงนี้: แปลงสัดส่วน factor ให้อยู่บนระบบมุมวาดพิกัดครึ่งวงกลมด้านบนของ HTML5 Canvas
+                        // แปลงสัดส่วน factor ให้อยู่บนระบบมุมวาดพิกัดครึ่งวงกลมด้านบนของ HTML5 Canvas
                         const targetAngle = -Math.PI + (factor * Math.PI);
                         
                         const cx = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
@@ -497,7 +501,7 @@
                     tableBottom.innerHTML = htmlBottom;
                 }
 
-                // 🛠️ ค้นหาและจับคู่ข้อมูลงัดเข้าเกจแต่ละตัวตามเงื่อนไขใหม่ของคุณ
+                // --- อัปเดตค่าเข้าหลอดเกจทั้ง 6 ตัวตามเงื่อนไขสเกลใหม่ ---
                 
                 // 1. UPPER (Burner Time)
                 const rawHr1 = findRealtimeValue(data.upperData, 'Burner Time');
