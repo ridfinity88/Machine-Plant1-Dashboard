@@ -14,7 +14,7 @@
             --width-col-right: auto; 
             --bg-color: #000;
             --card-bg: #000; /* ปรับเป็นสีดำสนิทให้เนียนไปกับพื้นหลัง */
-            --card-border: #2196F3; /* 🛠️ เปลี่ยนสีขอบการ์ดหลักเริ่มต้นเป็นสีฟ้า */
+            --card-border: rgba(33, 150, 243, 0.5); /* 🛠️ ปรับสีขอบการ์ดหลักให้จางลงครึ่งหนึ่ง (Opacity 0.5) */
             --card-gray: #424242;
             --card-green: #2e7d32;
             --card-red: #c62828;
@@ -72,7 +72,7 @@
         /* การ์ดเกจย่อยฝั่งขวา */
         .gauge-card { 
             background: #060608; 
-            border: 1px solid #2196F3; 
+            border: 1px solid rgba(33, 150, 243, 0.5); /* 🛠️ ปรับสีขอบเกจให้จางลงครึ่งหนึ่งตามสั่ง */
             border-radius: 6px; 
             padding: 8px 12px; 
             display: flex; 
@@ -425,7 +425,7 @@
                         // 🛠️ แก้ไขพิกัดการวาดวงกลมและอิโมจิให้แสดงผลกลางหลอดพลังอย่างถูกต้องและไม่หลุดขอบ
                         ctx.beginPath();
                         ctx.arc(textX, textY, 11, 0, 2 * Math.PI); // 🛠️ ลดขนาดรัศมีวงกลมพื้นหลังจาก 14px เป็น 11px ให้ฟิตพอดีหลอดพลัง
-                        ctx.fillStyle = 'transparent'; 
+                        ctx.fillStyle = '#060608'; // 🛠️ เปลี่ยนเป็นสีทึบเพื่อไม่ให้แถบพลังตัดผ่านตัวอิโมจิ
                         ctx.fill();
                         ctx.strokeStyle = '#ffffff'; 
                         ctx.lineWidth = 2.5; 
@@ -435,7 +435,7 @@
                         ctx.font = "12px Arial"; // 🛠️ ลดขนาดฟอนต์อิโมจิจาก 16px เป็น 12px เพื่อความสวยงามสมส่วนไม่ล้นวงกลม
                         ctx.textAlign = "center";
                         ctx.textBaseline = "middle";
-                        ctx.fillText(emoji, textX, textY); // 🛠️ สั่งให้วาดลงพิกัดตรงๆ แทนการ translate ป้องกันอาการเพี้ยน
+                        ctx.fillText(emoji, textX, textY); // 🛠️ แก้ไขให้เรนเดอร์อิโมจิทุกครั้งที่มีการวาดชุดข้อมูลสำเร็จ ป้องกันอาการอิโมจิหาย
 
                         ctx.restore();
                     }
@@ -583,6 +583,7 @@
             }
         }
 
+        // 🛠️ ปรับให้ระบบอัปเดตเกจเรียกวาดใหม่ได้อย่างสมบูรณ์แบบโดยที่ Pointer วงกลมและอิโมจิไม่หลุดหาย
         function updateGaugeValue(key, value, textId, isFloat = false) {
             document.getElementById(textId).innerText = isFloat ? value.toFixed(2) : value;
             if (charts[key]) {
