@@ -95,12 +95,13 @@
             justify-content: center;
         }
         
-        /* ปรับแต่งให้ตัวเลขอยู่กึ่งกลางวงกลมอย่างสมบูรณ์แบบ */
+        /* 🛠️ แก้ไข CSS ให้ข้อความดิจิทัลขยับขึ้นมาอยู่กึ่งกลางวงกลมอย่างสมบูรณ์แบบ */
         .gauge-center-text { 
             position: absolute; 
-            bottom: -5px; /* ปรับพิกัดตัวเลขให้อยู่กลางตามตำแหน่งหน้าปัดใหม่ */
+            top: 50%;
             left: 0;
             right: 0;
+            transform: translateY(-15%); /* ดึงเยื้องขึ้นเล็กน้อยเพื่อให้บาลานซ์กับทรงครึ่งวงกลมพอดี */
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
@@ -378,9 +379,10 @@
                         const { ctx } = chart;
                         const score = chart.data.datasets[0].needleValue;
                         
-                        // คำนวณพิกัด Center ให้อยู่จุดกึ่งกลางพื้นที่วาดอย่างสมบูรณ์แบบ
+                        // 🛠️ คำนวณพิกัด Center ให้ขยับขึ้นมาอยู่กึ่งกลางกล่อง Canvas อย่างสมบูรณ์แบบ
                         const cx = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
-                        const cy = chart.chartArea.bottom - 10; 
+                        const cy = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2 + (chart.getDatasetMeta(0).data[0].outerRadius / 4); 
+                        
                         const outerR = chart.getDatasetMeta(0).data[0].outerRadius;
                         const innerR = chart.getDatasetMeta(0).data[0].innerRadius;
                         const trackWidth = outerR - innerR;
