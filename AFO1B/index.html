@@ -402,30 +402,43 @@
                 const response = await fetch(finalUrl);
                 const data = await response.json();
                 
-                if (data && data.table) {
-                    let html = "";
-                    data.table.forEach(item => {
-                        const statusColor = (item.status === 'Running' || item.status === 'OK') ? 'text-green-500' : 'text-yellow-500';
-                        html += `
+                // เรนเดอร์ UPPER DATA (ช่อง B2:D13)
+                if (data && data.upperData) {
+                    let htmlTop = "";
+                    data.upperData.forEach(item => {
+                        htmlTop += `
                             <tr class="border-b border-gray-900 row-update">
-                                <td class="py-2 text-gray-300 font-bold pr-4 w-[40%]">${item.machine}</td>
-                                <td class="text-center text-blue-400 font-bold pr-4 w-[35%]">${item.temp}</td>
-                                <td class="text-right text-green-500 font-bold w-[25%]">${item.status}</td>
+                                <td class="py-2 text-gray-300 font-bold pr-4 w-[40%]">${item.item}</td>
+                                <td class="text-center text-blue-400 font-bold pr-4 w-[35%]">${item.realtime}</td>
+                                <td class="text-right text-green-500 font-bold w-[25%]">${item.normal}</td>
                             </tr>`;
                     });
-                    
-                    tableTop.innerHTML = html;
-                    tableBottom.innerHTML = html;
-
-                    updateGaugeValue('hr1', 1158, 'val-hr1');
-                    updateGaugeValue('hr2', 852, 'val-hr2');
-                    updateGaugeValue('cur1', 2.06, 'val-cur1', true);
-                    updateGaugeValue('cur2', 2.05, 'val-cur2', true);
-                    updateGaugeValue('temp1', 250, 'val-temp1');
-                    updateGaugeValue('temp2', 248, 'val-temp2');
-
-                    statusBox.innerHTML = '✅';
+                    tableTop.innerHTML = htmlTop;
                 }
+
+                // เรนเดอร์ LOWER DATA (ช่อง F2:H13)
+                if (data && data.lowerData) {
+                    let htmlBottom = "";
+                    data.lowerData.forEach(item => {
+                        htmlBottom += `
+                            <tr class="border-b border-gray-900 row-update">
+                                <td class="py-2 text-gray-300 font-bold pr-4 w-[40%]">${item.item}</td>
+                                <td class="text-center text-blue-400 font-bold pr-4 w-[35%]">${item.realtime}</td>
+                                <td class="text-right text-green-500 font-bold w-[25%]">${item.normal}</td>
+                            </tr>`;
+                    });
+                    tableBottom.innerHTML = htmlBottom;
+                }
+
+                // อัปเดตค่าของเกจวัด (ส่วนการทำงานเดิมยังอยู่ครบถ้วน)
+                updateGaugeValue('hr1', 1158, 'val-hr1');
+                updateGaugeValue('hr2', 852, 'val-hr2');
+                updateGaugeValue('cur1', 2.06, 'val-cur1', true);
+                updateGaugeValue('cur2', 2.05, 'val-cur2', true);
+                updateGaugeValue('temp1', 250, 'val-temp1');
+                updateGaugeValue('temp2', 248, 'val-temp2');
+
+                statusBox.innerHTML = '✅';
             } catch (error) {
                 console.error("Fetch Error:", error);
                 statusBox.innerHTML = '❌';
