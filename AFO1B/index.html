@@ -7,22 +7,83 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* 🛠️ ปรับอัตราส่วน Grid: คอลัมน์ซ้ายกระชับพอดีตาราง, คอลัมน์กลางยืดขยายชิดซ้าย, คอลัมน์ขวาขนาดคงเดิม */
-        :root { --width-col-left: max-content; --width-col-center: 1fr; --width-col-right: auto; }
-        body { background: #0f172a; color: #fff; margin: 0; overflow: hidden; font-family: sans-serif; }
+        :root { 
+            --width-col-left: max-content; 
+            --width-col-center: 1fr; 
+            --width-col-right: auto; 
+            --bg-color: #000;
+            --card-bg: #111;
+            --card-border: #333;
+            --card-gray: #424242;
+            --card-green: #2e7d32;
+            --card-red: #c62828;
+            --card-yellow: #fbc02d;
+            --card-blue: #2196F3;
+            --text-color: #fff;
+            --accent-blue: #2196F3;
+        }
+        
+        body { background: var(--bg-color); color: var(--text-color); margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
         /* สไตล์หน้า Login */
         #loginPage { position: fixed; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { width: 320px; background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 15px; }
+        .login-box { width: 320px; background: #222; padding: 30px; border-radius: 12px; border: 1px solid #444; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .input-group { position: relative; width: 100%; }
-        .login-box input { width: 100%; height: 45px; background: #020617; border: 1px solid #334155; border-radius: 8px; color: #fff; padding: 0 40px 0 12px; outline: none; }
-        .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; }
-        .login-btn { width: 100%; height: 45px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .error-text { color: #f87171; font-size: 13px; text-align: center; display: none; }
+        .login-box input { width: 100%; height: 45px; background: #333; border: 1px solid #555; border-radius: 4px; color: #fff; padding: 0 40px 0 12px; outline: none; text-align: center; }
+        .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 5px; }
+        .login-btn { width: 100%; height: 45px; background: var(--accent-blue); color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .login-btn:hover { background: #1976D2; transform: translateY(-2px); }
+        .error-text { color: var(--card-red); font-size: 13px; text-align: center; display: none; }
 
-        #dashboardPage { display: none; flex-direction: column; height: 100vh; max-height: 100vh; overflow: hidden; background: #0b0f19; }
-        .dashboard-container { display: grid; grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right); gap: 0.75rem; padding: 0.75rem; height: calc(100vh - 56px); max-height: calc(100vh - 56px); overflow: hidden; }
-        .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; position: relative; }
+        #dashboardPage { display: none; flex-direction: column; height: 100vh; max-height: 100vh; overflow: hidden; background: var(--bg-color); }
+        .dashboard-container { display: grid; grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right); gap: 8px; padding: 40px 10px 10px 10px; height: 100vh; max-height: 100vh; overflow: hidden; position: relative; }
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 4px; position: relative; }
+
+        /* จัดเรียงกลุ่มข้อมูลฝั่งซ้ายบน: วันเวลา -> สรุป -> อัปเดต */
+        .header-info { 
+            position: absolute; 
+            top: 5px; 
+            left: 10px; 
+            z-index: 10; 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+        }
+        .live-clock { background: #333; padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; white-space: nowrap; font-weight: bold; color: #fff; }
+        #syncStatus { font-size: 0.9rem; }
+        
+        /* โครงสร้างกล่องสรุปตัวเลข ปรับขนาดให้กระชับเข้ากับแถววันเวลา */
+        .summary-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #1a1a1a;
+            padding: 3px 10px;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem; 
+            font-weight: bold;
+            color: #ddd;
+        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot-blue { background-color: var(--card-blue); }
+        .dot-green { background-color: var(--card-green); }
+        .dot-yellow { background-color: var(--card-yellow); }
+        .dot-red { background-color: var(--card-red); }
+
+        /* หัวข้อใหญ่อยู่ตรงกลางด้านบน */
+        .main-title { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; font-weight: bold; color: #ccc; z-index: 5; text-transform: uppercase; }
+        
+        /* ปุ่มหน้าหลักขวาบน */
+        .home-btn-container { position: absolute; top: 4px; right: 110px; z-index: 10; }
+
+        /* ลายน้ำมุมขวาบน */
+        .watermark { position: absolute; top: 11px; right: 10px; font-size: 0.6rem; color: rgba(255, 255, 255, 0.2); z-index: 10; font-weight: bold; select-none; }
 
         /* Animation สำหรับไอคอนโหลด */
         .spin { animation: spin 1s linear infinite; display: inline-block; }
@@ -30,18 +91,18 @@
         
         /* แถวข้อมูลกระพริบตอนอัปเดต */
         .row-update { animation: highlight 1s ease-out; }
-        @keyframes highlight { 0% { background: rgba(59, 130, 246, 0.2); } 100% { background: transparent; } }
+        @keyframes highlight { 0% { background: rgba(33, 150, 243, 0.2); } 100% { background: transparent; } }
 
         /* การ์ดเกจย่อยฝั่งขวา */
         .gauge-card { 
-            background: #182235; 
-            border: 1px solid #233149; 
-            border-radius: 10px; 
+            background: var(--card-bg); 
+            border: 1px solid var(--card-border); 
+            border-radius: 4px; 
             padding: 6px 12px; 
             display: flex; 
             flex-direction: column; 
             justify-content: space-between; 
-            width: 260px; /* 🛠️ ล็อกขนาดคงที่ไว้ตามที่คุณต้องการ */
+            width: 260px;
             height: 100%;
             overflow: hidden;
         }
@@ -53,7 +114,7 @@
 
     <div id="loginPage">
         <div class="login-box">
-            <h2 class="text-center text-blue-400 font-bold text-xl uppercase tracking-widest">Login</h2>
+            <h2 class="text-center text-blue-500 font-bold text-xl uppercase tracking-widest">Login</h2>
             <div class="input-group">
                 <input type="password" id="passInput" placeholder="รหัสผ่าน" onkeypress="handleEnter(event)" autocomplete="off">
                 <button type="button" class="eye-btn" onclick="togglePass()"><span id="eyeIcon">👁️</span></button>
@@ -64,31 +125,37 @@
     </div>
 
     <div id="dashboardPage">
-        <header class="flex justify-between items-center h-14 px-6 border-b border-slate-800 bg-[#111827] flex-shrink-0">
-            <div class="flex items-center gap-4">
-                <a href="../index.html" class="flex items-center justify-center bg-slate-800 hover:bg-slate-700 transition-colors text-white rounded-lg h-9 px-3 border border-slate-700 font-bold text-sm" title="กลับหน้าหลัก">
+        <main class="dashboard-container">
+            
+            <div class="header-info">
+                <div class="live-clock" id="clock">00/00/0000 00:00:00</div>
+                <div class="summary-container">
+                    <div class="summary-item"><span class="dot dot-blue"></span><span id="sumBlue">1</span></div>
+                    <div class="summary-item"><span class="dot dot-green"></span><span id="sumGreen">1</span></div>
+                    <div class="summary-item"><span class="dot dot-yellow"></span><span id="sumYellow">1</span></div>
+                    <div class="summary-item"><span class="dot dot-red"></span><span id="sumRed">1</span></div>
+                </div>
+                <div id="syncStatus">✅</div>
+            </div>
+
+            <div class="main-title">Machine Dashboard - Realtime</div>
+
+            <div class="home-btn-container">
+                <a href="../index.html" class="flex items-center justify-center bg-[#333] hover:bg-[#444] transition-colors text-white rounded [padding:3px_8px] border border-[#555] font-bold text-[0.7rem]" title="กลับหน้าหลัก">
                     🏠 Home
                 </a>
-                <div id="clock" class="font-mono text-slate-300 text-lg font-bold tracking-wide">00:00:00</div>
             </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="text-slate-500 font-bold tracking-wider text-sm select-none opacity-60">
-                    RiDFinity Design
-                </div>
-                <div id="syncStatus" class="text-base"><span class="text-green-500">✅</span></div>
-            </div>
-        </header>
 
-        <main class="dashboard-container">
+            <div class="watermark">RiDFinity Design</div>
+
             <div class="grid grid-rows-2 gap-3 min-w-[280px] h-100 overflow-hidden">
-                <div class="card p-3 bg-[#111625] border-[#1e2640] flex flex-col overflow-hidden">
+                <div class="card p-3 flex flex-col overflow-hidden">
                     <div class="flex justify-between items-center mb-2 flex-shrink-0">
-                        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">⑤ Data Real-time (Top)</span>
+                        <span class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">⑤ Data Real-time (Top)</span>
                     </div>
                     <div class="overflow-y-auto flex-grow class-scroll">
                         <table class="w-full text-[11px]">
-                            <thead class="text-blue-400 border-b border-slate-800 text-left sticky top-0 bg-[#111625] z-10">
+                            <thead class="text-blue-400 border-b border-gray-800 text-left sticky top-0 bg-[#111] z-10">
                                 <tr>
                                     <th class="pb-1 pr-4">Name</th>
                                     <th class="text-center pb-1 pr-4">Temp</th>
@@ -103,13 +170,13 @@
                     </div>
                 </div>
 
-                <div class="card p-3 bg-[#111625] border-[#1e2640] flex flex-col overflow-hidden">
+                <div class="card p-3 flex flex-col overflow-hidden">
                     <div class="flex justify-between items-center mb-2 flex-shrink-0">
-                        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">⑤ Data Real-time (Bottom)</span>
+                        <span class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">⑤ Data Real-time (Bottom)</span>
                     </div>
                     <div class="overflow-y-auto flex-grow class-scroll">
                         <table class="w-full text-[11px]">
-                            <thead class="text-blue-400 border-b border-slate-800 text-left sticky top-0 bg-[#111625] z-10">
+                            <thead class="text-blue-400 border-b border-gray-800 text-left sticky top-0 bg-[#111] z-10">
                                 <tr>
                                     <th class="pb-1 pr-4">Name</th>
                                     <th class="text-center pb-1 pr-4">Temp</th>
@@ -126,80 +193,80 @@
             </div>
 
             <div class="grid grid-rows-3 gap-3 h-100 overflow-hidden">
-                <div class="card flex items-center justify-center bg-[#111625] border-[#1e2640] overflow-hidden"><img src="cen.png" class="max-h-[90%] max-w-[90%] object-contain"></div>
-                <div class="card flex items-center justify-center bg-[#111625] border-[#1e2640] overflow-hidden"><img src="in.png" class="max-h-[90%] max-w-[90%] object-contain"></div>
-                <div class="card flex items-center justify-center bg-[#111625] border-[#1e2640] overflow-hidden"><img src="out.png" class="max-h-[90%] max-w-[90%] object-contain"></div>
+                <div class="card flex items-center justify-center overflow-hidden"><img src="cen.png" class="max-h-[90%] max-w-[90%] object-contain"></div>
+                <div class="card flex items-center justify-center overflow-hidden"><img src="in.png" class="max-h-[90%] max-w-[90%] object-contain"></div>
+                <div class="card flex items-center justify-center overflow-hidden"><img src="out.png" class="max-h-[90%] max-w-[90%] object-contain"></div>
             </div>
 
             <div class="grid grid-cols-2 grid-rows-3 gap-3 justify-items-end h-100 overflow-hidden">
                 
                 <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 1 (ชั่วโมง)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-gray-300">ชั้นที่ 1 (ชั่วโมง)</span><span class="text-gray-500 text-[9px]">อัปเดตล่าสุด</span></div>
                     <div class="gauge-container">
                         <canvas id="gauge-hr1"></canvas>
                         <div class="gauge-center-text">
                             <span id="val-hr1" class="text-xl font-bold tracking-tight">1158</span>
-                            <span class="text-[9px] text-slate-400">ชั่วโมง</span>
+                            <span class="text-[9px] text-gray-400">ชั่วโมง</span>
                         </div>
                     </div>
                     <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● Status OK</span></div>
                 </div>
 
                 <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 2 (ชั่วโมง)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-gray-300">ชั้นที่ 2 (ชั่วโมง)</span><span class="text-gray-500 text-[9px]">อัปเดตล่าสุด</span></div>
                     <div class="gauge-container">
                         <canvas id="gauge-hr2"></canvas>
                         <div class="gauge-center-text">
                             <span id="val-hr2" class="text-xl font-bold tracking-tight">852</span>
-                            <span class="text-[9px] text-slate-400">ชั่วโมง</span>
+                            <span class="text-[9px] text-gray-400">ชั่วโมง</span>
                         </div>
                     </div>
                     <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● Status OK</span></div>
                 </div>
 
                 <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 1 (Current)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-gray-300">ชั้นที่ 1 (Current)</span><span class="text-gray-500 text-[9px]">อัปเดตล่าสุด</span></div>
                     <div class="gauge-container">
                         <canvas id="gauge-cur1"></canvas>
                         <div class="gauge-center-text">
                             <span id="val-cur1" class="text-xl font-bold tracking-tight">2.06</span>
-                            <span class="text-[9px] text-slate-400">แอมป์ (A)</span>
+                            <span class="text-[9px] text-gray-400">แอมป์ (A)</span>
                         </div>
                     </div>
                     <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● Status OK</span></div>
                 </div>
 
                 <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 2 (Current)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-gray-300">ชั้นที่ 2 (Current)</span><span class="text-gray-500 text-[9px]">อัปเดตล่าสุด</span></div>
                     <div class="gauge-container">
                         <canvas id="gauge-cur2"></canvas>
                         <div class="gauge-center-text">
                             <span id="val-cur2" class="text-xl font-bold tracking-tight">2.05</span>
-                            <span class="text-[9px] text-slate-400">แอมป์ (A)</span>
+                            <span class="text-[9px] text-gray-400">แอมป์ (A)</span>
                         </div>
                     </div>
                     <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● Status OK</span></div>
                 </div>
 
                 <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 1 (Temp)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-gray-300">ชั้นที่ 1 (Temp)</span><span class="text-gray-500 text-[9px]">อัปเดตล่าสุด</span></div>
                     <div class="gauge-container">
                         <canvas id="gauge-temp1"></canvas>
                         <div class="gauge-center-text">
                             <span id="val-temp1" class="text-xl font-bold tracking-tight">250</span>
-                            <span class="text-[9px] text-slate-400">องศาเซลเซียส</span>
+                            <span class="text-[9px] text-gray-400">องศาเซลเซียส</span>
                         </div>
                     </div>
                     <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● Status OK</span></div>
                 </div>
 
                 <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-slate-300">ชั้นที่ 2 (Temp)</span><span class="text-slate-500 text-[9px]">อัปเดตล่าสุด</span></div>
+                    <div class="flex justify-between items-center text-[11px] font-bold"><span class="text-gray-300">ชั้นที่ 2 (Temp)</span><span class="text-gray-500 text-[9px]">อัปเดตล่าสุด</span></div>
                     <div class="gauge-container">
                         <canvas id="gauge-temp2"></canvas>
                         <div class="gauge-center-text">
                             <span id="val-temp2" class="text-xl font-bold tracking-tight">248</span>
-                            <span class="text-[9px] text-slate-400">องศาเซลเซียส</span>
+                            <span class="text-[9px] text-gray-400">องศาเซลเซียส</span>
                         </div>
                     </div>
                     <div class="text-center"><span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#062f22] text-[#10b981] font-bold border border-[#10b981]/20">● Status OK</span></div>
@@ -211,12 +278,11 @@
 
     <script>
         const MY_PASS = "1234";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYeA5b5d9MMrpWhi1K19O5fqn5jliHDMUg0aCHdIfzlGtCTEQB33BrqgCzImSamZX8Bg/exec";
         
         let charts = {};
 
         // --- ระบบ Login ---
-        // ฟังก์ชันอัปเดตเวลาให้แสดงผลทั้ง วัน วันที่ และเวลาแบบไทย
         function updateClock() {
             const now = new Date();
             const options = { 
@@ -259,11 +325,11 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             
             let dataSegments = [70, 15, 15]; 
-            let segmentColors = ['#10b981', '#f59e0b', '#ef4444'];
+            let segmentColors = ['#2e7d32', '#fbc02d', '#c62828']; // ปรับค่าสีให้อิงตาม Palette โค้ดที่ 1
             
             if (type === 'current') {
                 dataSegments = [20, 20, 20, 20, 20]; 
-                segmentColors = ['#ef4444', '#f59e0b', '#10b981', '#f59e0b', '#ef4444'];
+                segmentColors = ['#c62828', '#fbc02d', '#2e7d32', '#fbc02d', '#c62828'];
             }
 
             return new Chart(ctx, {
@@ -320,7 +386,7 @@
 
                         ctx.beginPath();
                         ctx.arc(nx, ny, 3, 0, 2 * Math.PI);
-                        ctx.fillStyle = '#f59e0b';
+                        ctx.fillStyle = '#fbc02d';
                         ctx.fill();
                         ctx.restore();
                     }
@@ -361,12 +427,12 @@
                 if (data && data.table) {
                     let html = "";
                     data.table.forEach(item => {
-                        const statusColor = (item.status === 'Running' || item.status === 'OK') ? 'text-green-400' : 'text-amber-400';
+                        const statusColor = (item.status === 'Running' || item.status === 'OK') ? 'text-green-500' : 'text-yellow-500';
                         html += `
-                            <tr class="border-b border-slate-900 row-update">
-                                <td class="py-2 text-slate-300 font-bold pr-4">${item.machine}</td>
+                            <tr class="border-b border-gray-900 row-update">
+                                <td class="py-2 text-gray-300 font-bold pr-4">${item.machine}</td>
                                 <td class="text-center text-blue-400 font-bold pr-4">${item.temp}</td>
-                                <td class="text-center text-green-400 font-bold pr-4">${item.pressure}</td>
+                                <td class="text-center text-green-500 font-bold pr-4">${item.pressure}</td>
                                 <td class="text-right font-bold ${statusColor}">${item.status}</td>
                             </tr>`;
                     });
@@ -381,11 +447,11 @@
                     updateGaugeValue('temp1', 250, 'val-temp1');
                     updateGaugeValue('temp2', 248, 'val-temp2');
 
-                    statusBox.innerHTML = '<span class="text-green-500">✅</span>';
+                    statusBox.innerHTML = '✅';
                 }
             } catch (error) {
                 console.error("Fetch Error:", error);
-                statusBox.innerHTML = '<span class="text-red-500">❌</span>';
+                statusBox.innerHTML = '❌';
             }
         }
 
