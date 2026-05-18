@@ -67,10 +67,10 @@
         .row-update { animation: highlight 1s ease-out; }
         @keyframes highlight { 0% { background: rgba(33, 150, 243, 0.1); } 100% { background: transparent; } }
 
-        /* การ์ดเกจย่อยฝั่งขวา (ปรับปรับโฉมให้โคตรเท่ สไตล์ High-Tech Dashboard) */
+        /* การ์ดเกจย่อยฝั่งขวา (ปรับเปลี่ยนให้ขอบเป็นสีฟ้าค้างไว้ถาวร) */
         .gauge-card { 
             background: #060608; 
-            border: 1px solid #14161d; 
+            border: 1px solid #2196F3; /* 🛠️ เปลี่ยนจากสีมืดเป็นสีฟ้าค้างไว้เลยทุกการ์ด */
             border-radius: 6px; 
             padding: 8px 12px; 
             display: flex; 
@@ -82,9 +82,6 @@
             overflow: hidden;
             box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
             transition: border 0.3s;
-        }
-        .gauge-card:hover {
-            border-color: #2196F3;
         }
         .gauge-container { 
             position: relative; 
@@ -426,18 +423,17 @@
                         ctx.translate(textX, textY);
                         ctx.rotate(needleAngle + Math.PI / 2); // หมุนวัตถุให้หันหน้าตามมุมของวงกลมหน้าปัด
 
-                        // 🛠️ [เพิ่มการวาดวงกลมสีขาวพื้นหลังล้อมรอบอิโมจิ]
+                        // 🛠️ [แก้ไขจากวงกลมสีขาวเป็นโปร่งใส และขอบฟ้าเป็นขอบสีขาวหนาขึ้น]
                         ctx.beginPath();
-                        ctx.arc(0, 0, 14, 0, 2 * Math.PI); // วาดรัศมีวงกลมสีขาวครอบคลุมตัวอิโมจิพอดี (ขนาด 14px)
-                        ctx.fillStyle = '#ffffff';
+                        ctx.arc(0, 0, 14, 0, 2 * Math.PI); // วาดรัศมีวงกลมครอบคลุมตัวอิโมจิพอดี (ขนาด 14px)
+                        ctx.fillStyle = 'transparent'; // เปลี่ยนจาก #ffffff เป็น transparent (โปร่งใส)
                         ctx.fill();
-                        ctx.strokeStyle = '#2196F3'; // เพิ่มขอบนอกของวงกลมสีขาวด้วยสีฟ้าเพิ่มมิติไฮเทค
-                        ctx.lineWidth = 1.5;
+                        ctx.strokeStyle = '#ffffff'; // เปลี่ยนจากสีฟ้า #2196F3 เป็นสีขาว #ffffff
+                        ctx.lineWidth = 2.5; // เพิ่มความหนาของเส้นขอบเล็กน้อยจากเดิม 1.5 เป็น 2.5
                         ctx.stroke();
 
                         // 5. วาดตัวชี้บอกตำแหน่งด้วย อิโมจิ (Emoji Pointer)
                         ctx.font = "16px Arial"; // ปรับลดขนาดเล็กน้อยให้ฟิตพอดีกับวงกลมสีขาวฉากหลังอย่างสวยงาม
-                        ctx.textAlign = "center";
                         ctx.textBaseline = "middle";
                         ctx.fillText(emoji, 0, 0);
 
