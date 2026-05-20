@@ -220,7 +220,10 @@
 
         /* 1. อนิเมชันเฟืองหมุนช้า ๆ อยู่กับที่ */
         .spin-slow {
-            animation: spin 3s linear infinite;
+            animation: spinGear 3s linear infinite;
+        }
+        @keyframes spinGear {
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         /* 2. อนิเมชันไฟกระพริบความร้อนวูบวาบ (ขยายใหญ่ขึ้นเล็กน้อย) */
@@ -267,6 +270,15 @@
         #up-heat6 { top: 35%; left: 60%; }
         #up-heat7 { top: 35%; left: 65%; }
         #up-heat8 { top: 35%; left: 70%; }
+        /* พิกัดตำแหน่งไฟ ♨️ เพิ่มเติมอีก 8 อัน ฝั่ง UPPER */
+        #up-heat9  { top: 25%; left: 57%; }
+        #up-heat10 { top: 25%; left: 62%; }
+        #up-heat11 { top: 25%; left: 67%; }
+        #up-heat12 { top: 25%; left: 72%; }
+        #up-heat13 { top: 40%; left: 57%; }
+        #up-heat14 { top: 40%; left: 62%; }
+        #up-heat15 { top: 40%; left: 67%; }
+        #up-heat16 { top: 40%; left: 72%; }
 
         /* 📍 ส่วนพิกัดตำแหน่งอิโมจิกลุ่ม LOWER DATA (สามารถปรับ % เปลี่ยนพิกัดตรงนี้ได้เลย) */
         #lo-gear1 { top: 65%; left: 15%; font-size: 14px; }
@@ -281,6 +293,15 @@
         #lo-heat6 { top: 75%; left: 60%; }
         #lo-heat7 { top: 75%; left: 65%; }
         #lo-heat8 { top: 75%; left: 70%; }
+        /* พิกัดตำแหน่งไฟ ♨️ เพิ่มเติมอีก 8 อัน ฝั่ง LOWER */
+        #lo-heat9  { top: 65%; left: 57%; }
+        #lo-heat10 { top: 65%; left: 62%; }
+        #lo-heat11 { top: 65%; left: 67%; }
+        #lo-heat12 { top: 65%; left: 72%; }
+        #lo-heat13 { top: 80%; left: 57%; }
+        #lo-heat14 { top: 80%; left: 62%; }
+        #lo-heat15 { top: 80%; left: 67%; }
+        #lo-heat16 { top: 80%; left: 72%; }
 
     </style>
 </head>
@@ -374,6 +395,14 @@
                             <i id="up-heat6" class="animated-emoji pulse-fast">♨️</i>
                             <i id="up-heat7" class="animated-emoji pulse-fast">♨️</i>
                             <i id="up-heat8" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat9" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat10" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat11" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat12" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat13" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat14" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat15" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat16" class="animated-emoji pulse-fast">♨️</i>
                         </div>
 
                         <div id="lower-emoji-group">
@@ -389,6 +418,14 @@
                             <i id="lo-heat6" class="animated-emoji pulse-fast">♨️</i>
                             <i id="lo-heat7" class="animated-emoji pulse-fast">♨️</i>
                             <i id="lo-heat8" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat9" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat10" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat11" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat12" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat13" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat14" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat15" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat16" class="animated-emoji pulse-fast">♨️</i>
                         </div>
                     </div>
                 </div>
