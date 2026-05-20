@@ -195,6 +195,93 @@
         #box-l-lpg      { top: 10%; left: 77%; }
         #box-l-conveyor { top: 73%; left: 101%; }
 
+        /* ======================================================== */
+        /* 🛠️ ส่วนเพิ่มสไตล์ CSS สำหรับระบบอนิเมชันอิโมจิ การ์ดกลางด้านบน */
+        /* ======================================================== */
+        .animated-emoji {
+            position: absolute;
+            z-index: 25;
+            transform: translate(-50%, -50%);
+            user-select: none;
+            pointer-events: none;
+            font-style: normal;
+        }
+
+        /* คอนเทนเนอร์แยกอิสระระหว่าง UPPER และ LOWER */
+        #upper-emoji-group, #lower-emoji-group {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            display: none; /* เริ่มต้นซ่อนไว้ จะแสดงเมื่อสถานะเป็น Status OK เท่านั้น */
+        }
+
+        /* 1. อนิเมชันเฟืองหมุนช้า ๆ อยู่กับที่ */
+        .spin-slow {
+            animation: spin 3s linear infinite;
+        }
+
+        /* 2. อนิเมชันไฟกระพริบความร้อนวูบวาบ (ขยายใหญ่ขึ้นเล็กน้อย) */
+        .pulse-fast {
+            font-size: 18px; /* ปรับขนาดให้ใหญ่ขึ้นเล็กน้อยตามสั่ง */
+            animation: pulseFast 0.8s ease-in-out infinite alternate;
+        }
+        @keyframes pulseFast {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.4; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+        }
+
+        /* 3. อนิเมชันเคลื่อนที่ซ้ายไปขวาช้า ๆ แล้วจางหายไป (ระยะไม่มาก) */
+        .move-fade {
+            animation: moveFadeLoop 4s linear infinite;
+        }
+        @keyframes moveFadeLoop {
+            0% {
+                transform: translate(-150%, -50%);
+                opacity: 0;
+            }
+            15% {
+                opacity: 1;
+            }
+            85% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(50%, -50%);
+                opacity: 0;
+            }
+        }
+
+        /* 📍 ส่วนพิกัดตำแหน่งอิโมจิกลุ่ม UPPER DATA (สามารถปรับ % เปลี่ยนพิกัดตรงนี้ได้เลย) */
+        #up-gear1 { top: 20%; left: 15%; font-size: 14px; }
+        #up-gear2 { top: 20%; left: 22%; font-size: 14px; }
+        #up-cock  { top: 45%; left: 30%; font-size: 16px; } /* ไก่หันขวาจะครอบสไตล์พิเศษใน HTML */
+        #up-drum  { top: 45%; left: 45%; font-size: 16px; }
+        #up-heat1 { top: 30%; left: 55%; }
+        #up-heat2 { top: 30%; left: 60%; }
+        #up-heat3 { top: 30%; left: 65%; }
+        #up-heat4 { top: 30%; left: 70%; }
+        #up-heat5 { top: 35%; left: 55%; }
+        #up-heat6 { top: 35%; left: 60%; }
+        #up-heat7 { top: 35%; left: 65%; }
+        #up-heat8 { top: 35%; left: 70%; }
+
+        /* 📍 ส่วนพิกัดตำแหน่งอิโมจิกลุ่ม LOWER DATA (สามารถปรับ % เปลี่ยนพิกัดตรงนี้ได้เลย) */
+        #lo-gear1 { top: 65%; left: 15%; font-size: 14px; }
+        #lo-gear2 { top: 65%; left: 22%; font-size: 14px; }
+        #lo-cock  { top: 80%; left: 30%; font-size: 16px; } /* ไก่หันขวาจะครอบสไตล์พิเศษใน HTML */
+        #lo-drum  { top: 80%; left: 45%; font-size: 16px; }
+        #lo-heat1 { top: 70%; left: 55%; }
+        #lo-heat2 { top: 70%; left: 60%; }
+        #lo-heat3 { top: 70%; left: 65%; }
+        #lo-heat4 { top: 70%; left: 70%; }
+        #lo-heat5 { top: 75%; left: 55%; }
+        #lo-heat6 { top: 75%; left: 60%; }
+        #lo-heat7 { top: 75%; left: 65%; }
+        #lo-heat8 { top: 75%; left: 70%; }
+
     </style>
 </head>
 <body>
@@ -271,7 +358,39 @@
 
             <div class="grid grid-rows-3 gap-3 h-100 overflow-hidden">
                 <div class="card flex items-center justify-center overflow-hidden">
-                    <img src="cen.png" class="max-h-[90%] max-w-[90%] object-contain">
+                    <div class="image-wrapper">
+                        <img src="cen.png" class="max-h-[90%] max-w-[90%] object-contain">
+                        
+                        <div id="upper-emoji-group">
+                            <i id="up-gear1" class="animated-emoji spin-slow">⚙️</i>
+                            <i id="up-gear2" class="animated-emoji spin-slow">⚙️</i>
+                            <div id="up-cock" class="animated-emoji move-fade"><i class="inline-block scale-x-[-1] not-italic">🐓</i></div>
+                            <i id="up-drum" class="animated-emoji move-fade">🍗</i>
+                            <i id="up-heat1" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat2" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat3" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat4" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat5" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat6" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat7" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="up-heat8" class="animated-emoji pulse-fast">♨️</i>
+                        </div>
+
+                        <div id="lower-emoji-group">
+                            <i id="lo-gear1" class="animated-emoji spin-slow">⚙️</i>
+                            <i id="lo-gear2" class="animated-emoji spin-slow">⚙️</i>
+                            <div id="lo-cock" class="animated-emoji move-fade"><i class="inline-block scale-x-[-1] not-italic">🐓</i></div>
+                            <i id="lo-drum" class="animated-emoji move-fade">🍗</i>
+                            <i id="lo-heat1" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat2" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat3" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat4" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat5" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat6" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat7" class="animated-emoji pulse-fast">♨️</i>
+                            <i id="lo-heat8" class="animated-emoji pulse-fast">♨️</i>
+                        </div>
+                    </div>
                 </div>
                 <div class="card flex items-center justify-center overflow-hidden">
                     <div class="image-wrapper">
@@ -716,6 +835,12 @@
                         }
                     });
 
+                    // 🛠️ ควบคุมการแสดงผลกลุ่มอิโมจิอนิเมชันฝั่ง UPPER DATA ตามเงื่อนไข K2 แยกอิสระ
+                    const upperEmojiContainer = document.getElementById('upper-emoji-group');
+                    if (upperEmojiContainer) {
+                        upperEmojiContainer.style.display = (k2Val === 1) ? 'block' : 'none';
+                    }
+
                     // 2. อัปเดตสถานะของกลุ่มการ์ดฝั่ง LOWER DATA ทั้งหมดอย่างแยกเป็นอิสระ (ใช้ K13)
                     const lowerLabels = document.querySelectorAll('.status-display-lower');
                     lowerLabels.forEach(el => {
@@ -727,6 +852,12 @@
                             el.className = 'status-display-lower ml-1 text-[#ef4444] font-bold animate-pulse';
                         }
                     });
+
+                    // 🛠️ ควบคุมการแสดงผลกลุ่มอิโมจิอนิเมชันฝั่ง LOWER DATA ตามเงื่อนไข K13 แยกอิสระ
+                    const lowerEmojiContainer = document.getElementById('lower-emoji-group');
+                    if (lowerEmojiContainer) {
+                        lowerEmojiContainer.style.display = (k13Val === 1) ? 'block' : 'none';
+                    }
 
                     // อัปเดตสถานะสีของจุดสัญญาณ LED ขยายเพิ่มเป็น 10 จุด (K3 ถึง K12) 
                     if (data.connectionStatus.k3_to_k10 && Array.isArray(data.connectionStatus.k3_to_k10)) {
