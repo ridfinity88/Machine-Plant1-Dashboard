@@ -796,20 +796,8 @@
                         let rtNum = parseNum(item.realtime);
                         let nmNum = parseNum(item.normal);
                         
-                        let realtimeColor = "text-blue-400"; 
-                        
-                        if (!isNaN(rtNum) && !isNaN(nmNum)) {
-                            if (rtNum === nmNum) {
-                                realtimeColor = "text-green-500";
-                            } else {
-                                realtimeColor = "text-red-500";
-                            }
-                        } else if (item.realtime && item.normal) {
-                            let rtStr = String(item.realtime).trim().toLowerCase();
-                            let nmStr = String(item.normal).trim().toLowerCase();
-                            realtimeColor = (rtStr === nmStr) ? "text-green-500" : "text-red-500";
-                        }
-
+                        // ปรับให้เป็นสีเขียวตลอดเวลาตามต้องการ
+                        let realtimeColor = "text-green-500";
                         htmlTop += `
                             <tr class="border-b border-gray-900 row-update">
                                 <td class="py-2 text-gray-300 font-bold pr-4 w-[50%]">${item.item}</td>
@@ -836,19 +824,8 @@
                         let rtNum = parseNum(item.realtime);
                         let nmNum = parseNum(item.normal);
                         
-                        let realtimeColor = "text-blue-400"; 
-                        
-                        if (!isNaN(rtNum) && !isNaN(nmNum)) {
-                            if (rtNum === nmNum) {
-                                realtimeColor = "text-green-500";
-                            } else {
-                                realtimeColor = "text-red-500";
-                            }
-                        } else if (item.realtime && item.normal) {
-                            let rtStr = String(item.realtime).trim().toLowerCase();
-                            let nmStr = String(item.normal).trim().toLowerCase();
-                            realtimeColor = (rtStr === nmStr) ? "text-green-500" : "text-red-500";
-                        }
+                        // ปรับให้เป็นสีเขียวตลอดเวลาตามต้องการ
+                        let realtimeColor = "text-green-500";
 
                         htmlBottom += `
                             <tr class="border-b border-gray-900 row-update">
