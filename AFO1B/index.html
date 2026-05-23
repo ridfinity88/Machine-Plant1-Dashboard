@@ -32,7 +32,7 @@
         .input-group { position: relative; width: 100%; }
         .login-box input { width: 100%; height: 45px; background: #222; border: 1px solid #444; border-radius: 4px; color: #fff; padding: 0 40px 0 12px; outline: none; text-align: center; }
         .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 5px; }
-        .login-btn { width: 100%; height: 45px; background: var(--accent-blue); color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .login-btn { width: 100%; height: 45px; background: var(--accent-blue); color: #fff; border: none; border-radius: 66px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .login-btn:hover { background: #1976D2; transform: translateY(-2px); }
         .error-text { color: var(--card-red); font-size: 13px; text-align: center; display: none; }
 
@@ -317,10 +317,30 @@
         #lo-heat15 { top: 64%; left: 84%; font-size: 36px;  }
         #lo-heat16 { top: 69%; left: 84%; font-size: 36px;  }
 
-        /* --- สไตล์ของ Pop-up Modal กราฟเส้น --- */
-        .chart-modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 10000; }
-        .chart-modal-content { width: 90%; max-width: 850px; background: #0b0d13; border: 1px solid var(--accent-blue); border-radius: 12px; padding: 20px; box-shadow: 0 0 30px rgba(33, 150, 243, 0.3); position: relative; }
-
+        /* --- 📊 สไตล์ส่วนควบคุมหน้าต่างกราฟ Pop-up (เพิ่มเข้าใหม่แยกอิสระ) --- */
+        .chart-popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .chart-popup-box {
+            width: 90vw;
+            max-width: 1100px;
+            height: 80vh;
+            background: #090b10;
+            border: 2px solid #2196F3;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 0 30px rgba(33, 150, 243, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -357,7 +377,7 @@
                 <div class="card p-3 flex flex-col overflow-hidden">
                     <div class="flex justify-between items-center mb-1 flex-shrink-0 text-[10px] font-bold border-b border-gray-900 pb-1 w-full">
                         <span class="text-gray-300">UPPER DATA <span class="status-display-upper ml-1"></span></span>
-                        <button onclick="openChartModal('upper')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-0.5 rounded text-[9px] transition-colors">📊 View Chart</button>
+                        <button onclick="openChartPopup('upper')" class="bg-blue-600 hover:bg-blue-700 text-white text-[9px] px-2 py-0.5 rounded transition">📈 View Trend</button>
                     </div>
                     <div class="overflow-y-auto flex-grow class-scroll mt-1">
                         <table class="w-full text-[11px]">
@@ -378,7 +398,7 @@
                 <div class="card p-3 flex flex-col overflow-hidden">
                     <div class="flex justify-between items-center mb-1 flex-shrink-0 text-[10px] font-bold border-b border-gray-900 pb-1 w-full">
                         <span class="text-gray-300">LOWER DATA <span class="status-display-lower ml-1"></span></span>
-                        <button onclick="openChartModal('lower')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-0.5 rounded text-[9px] transition-colors">📊 View Chart</button>
+                        <button onclick="openChartPopup('lower')" class="bg-blue-600 hover:bg-blue-700 text-white text-[9px] px-2 py-0.5 rounded transition">📈 View Trend</button>
                     </div>
                     <div class="overflow-y-auto flex-grow class-scroll mt-1">
                         <table class="w-full text-[11px]">
@@ -571,14 +591,14 @@
         </main>
     </div>
 
-    <div id="chartModal" class="chart-modal">
-        <div class="chart-modal-content">
-            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
-                <h3 id="modalTitle" class="text-blue-400 font-bold text-base uppercase tracking-wider">Real-time Trend Chart</h3>
-                <button onclick="closeChartModal()" class="text-gray-400 hover:text-white font-bold text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded transition-colors">✕ ปิดหน้าต่าง</button>
+    <div id="chartPopup" class="chart-popup-overlay">
+        <div class="chart-popup-box">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                <h3 id="popupTitle" class="text-blue-400 font-bold text-lg">Realtime Data Trend</h3>
+                <button onclick="closeChartPopup()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded text-sm transition">❌ Close</button>
             </div>
-            <div class="w-full h-[400px]">
-                <canvas id="trendLineChart"></canvas>
+            <div class="flex-grow w-full relative h-[90%]">
+                <canvas id="popupLineChart"></canvas>
             </div>
         </div>
     </div>
@@ -588,9 +608,16 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyopab6Nlyt7iAz90qzNgHpPPFXS5_MCXC1D-m7-rSm6ljoK_3Oa-ryGTVi6iuQIcaJA/exec";
         
         let charts = {};
-        let currentDataCache = { upper: [], lower: [] };
-        let activeModalType = null;
-        let modalInterval = null;
+        
+        // --- 📊 ตัวแปรและข้อมูลสำหรับจัดการ Pop-up กราฟเส้น (เพิ่มเข้าใหม่แยกอิสระ) ---
+        let popupChartObj = null;
+        let chartInterval = null;
+        let currentActiveGroup = null; // 'upper' หรือ 'lower'
+        // โครงสร้างสำหรับเก็บบันทึกประวัติข้อมูลเพื่อนำไปทำกราฟวิ่งเลื่อน (สูงสุด 20 ค่าล่าสุด)
+        let trendHistory = {
+            upper: {},
+            lower: {}
+        };
 
         // --- ระบบ Login ---
         function updateClock() {
@@ -812,12 +839,21 @@
                 
                 // เรนเดอร์ UPPER DATA (ช่อง B2:D13)
                 if (data && data.upperData) {
-                    currentDataCache.upper = data.upperData; // เก็บแคชสำหรับกราฟเส้น
                     let htmlTop = "";
                     data.upperData.forEach(item => {
                         let rtNum = parseNum(item.realtime);
                         let nmNum = parseNum(item.normal);
                         
+                        // บันทึกประวัติข้อมูลลง trendHistory สำหรับทำกราฟเส้น
+                        if(!isNaN(rtNum)) {
+                            if(!trendHistory.upper[item.item]) trendHistory.upper[item.item] = [];
+                            // เพิ่มข้อมูลเข้าก้นอาเรย์ถ้าไม่มีการซ้ำในรอบสั้น
+                            if(trendHistory.upper[item.item].length === 0 || trendHistory.upper[item.item][trendHistory.upper[item.item].length-1] !== rtNum) {
+                                trendHistory.upper[item.item].push(rtNum);
+                                if(trendHistory.upper[item.item].length > 20) trendHistory.upper[item.item].shift();
+                            }
+                        }
+
                         // ปรับให้เป็นสีเขียวตลอดเวลาตามต้องการ
                         let realtimeColor = "text-green-500";
                         htmlTop += `
@@ -841,12 +877,20 @@
 
                 // เรนเดอร์ LOWER DATA (ช่อง F2:H13)
                 if (data && data.lowerData) {
-                    currentDataCache.lower = data.lowerData; // เก็บแคชสำหรับกราฟเส้น
                     let htmlBottom = "";
                     data.lowerData.forEach(item => {
                         let rtNum = parseNum(item.realtime);
                         let nmNum = parseNum(item.normal);
                         
+                        // บันทึกประวัติข้อมูลลง trendHistory สำหรับทำกราฟเส้น
+                        if(!isNaN(rtNum)) {
+                            if(!trendHistory.lower[item.item]) trendHistory.lower[item.item] = [];
+                            if(trendHistory.lower[item.item].length === 0 || trendHistory.lower[item.item][trendHistory.lower[item.item].length-1] !== rtNum) {
+                                trendHistory.lower[item.item].push(rtNum);
+                                if(trendHistory.lower[item.item].length > 20) trendHistory.lower[item.item].shift();
+                            }
+                        }
+
                         // ปรับให้เป็นสีเขียวตลอดเวลาตามต้องการ
                         let realtimeColor = "text-green-500";
 
@@ -969,104 +1013,98 @@
             }
         }
 
-        // --- ระบบแสดงผล Real-time Trend Pop-up (3 วินาทีเดี่ยวแยกอิสระ) ---
-        function openChartModal(type) {
-            activeModalType = type;
-            document.getElementById('modalTitle').innerText = `${type === 'upper' ? 'UPPER DATA' : 'LOWER DATA'} - 3s Real-time Trend Chart`;
-            document.getElementById('chartModal').style.display = 'flex';
+        // --- 📊 ฟังก์ชันจัดการระบบ Pop-up กราฟเส้นแบบวิ่งทุก 3 วินาที (เพิ่มเข้าใหม่แยกอิสระ) ---
+        function openChartPopup(group) {
+            currentActiveGroup = group;
+            document.getElementById('popupTitle').innerText = group === 'upper' ? '📈 UPPER DATA REALTIME TREND' : '📈 LOWER DATA REALTIME TREND';
+            document.getElementById('chartPopup').style.display = 'flex';
             
-            const ctx = document.getElementById('trendLineChart').getContext('2d');
-            const targetItems = type === 'upper' ? currentDataCache.upper : currentDataCache.lower;
+            const ctx = document.getElementById('popupLineChart').getContext('2d');
+            const targetData = trendHistory[group];
+            const items = Object.keys(targetData);
             
-            // คัดกรองเอาเฉพาะหัวข้อที่มีค่าตัวเลขมาแสดงเป็นเส้นกราฟคู่ขนานกัน
-            const datasets = [];
-            const colors = ['#2196F3', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#06b6d4', '#14b8a6', '#f43f5e'];
+            // สุ่มสีสวยๆ แบบนีออนให้แต่ละเส้นกราฟ
+            const colors = ['#2196F3', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#a855f7', '#06b6d4', '#6366f1', '#84cc16'];
             
-            let colorIdx = 0;
-            targetItems.forEach(item => {
-                let cleanVal = String(item.realtime).replace(/[^\d.-]/g, '');
-                let num = parseFloat(cleanVal);
-                if (!isNaN(num)) {
-                    datasets.push({
-                        label: item.item,
-                        data: [num],
-                        borderColor: colors[colorIdx % colors.length],
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        tension: 0.3
-                    });
-                    colorIdx++;
+            // เตรียม Datasets สำหรับ Chart.js
+            let datasets = items.map((item, idx) => {
+                // หากพึ่งเปิดหน้าแล้วอาร์เรย์ยังว่าง ให้ใส่ค่าตั้งต้นหลอกไว้ก่อนป้องกันกราฟโล่ง
+                if(targetData[item].length === 0) {
+                    targetData[item] = Array(15).fill(0);
                 }
+                while(targetData[item].length < 15) {
+                    targetData[item].unshift(targetData[item][0] || 0);
+                }
+                
+                return {
+                    label: item,
+                    data: [...targetData[item]],
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0.2
+                };
             });
 
-            const initialTime = new Date().toLocaleTimeString('th-TH');
-
-            if(charts['trendLine']) { charts['trendLine'].destroy(); }
-
-            charts['trendLine'] = new Chart(ctx, {
+            // สร้างออบเจกต์กราฟเส้น
+            popupChartObj = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: [initialTime],
+                    labels: Array(15).fill('').map((_, i) => ''),
                     datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { color: '#ccc', font: { size: 10 } }, position: 'bottom' },
-                        tooltip: { mode: 'index', intersect: false }
+                        legend: {
+                            labels: { color: '#ccc', font: { size: 10 } },
+                            position: 'top'
+                        }
                     },
                     scales: {
-                        x: { grid: { color: '#222' }, ticks: { color: '#aaa', font: { size: 9 } } },
-                        y: { grid: { color: '#222' }, ticks: { color: '#aaa', font: { size: 10 } } }
+                        x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
+                        y: { 
+                            grid: { color: '#1f2937' }, 
+                            ticks: { color: '#9ca3af' },
+                            // ตั้งค่าสเกลแบบละเอียดอัตโนมัติตามชุดข้อมูลที่มีอยู่จริง ณ ขณะนั้นๆ
+                            grace: '5%'
+                        }
                     }
                 }
             });
 
-            // ตั้งค่าลูปอัปเดตข้อมูลกราฟเส้นทุก ๆ 3 วินาทีแบบ Real-time ขยับเคลื่อนไปเรื่อย ๆ
-            modalInterval = setInterval(() => {
-                if (!charts['trendLine']) return;
-                
-                const timeLabel = new Date().toLocaleTimeString('th-TH');
-                const lineChart = charts['trendLine'];
-                
-                // จำกัดการแสดงผลไม่เกิน 10 จุด เพื่อความสมูทสวยงามประหยัดทรัพยากรหน้าจอ
-                if (lineChart.data.labels.length >= 10) {
-                    lineChart.data.labels.shift();
-                }
-                lineChart.data.labels.push(timeLabel);
+            // เริ่มคำสั่งลูปการวิ่งของกราฟเส้นทุกๆ 3 วินาที (3000ms)
+            chartInterval = setInterval(() => {
+                if (!popupChartObj) return;
 
-                lineChart.data.datasets.forEach(dataset => {
-                    const currentItems = activeModalType === 'upper' ? currentDataCache.upper : currentDataCache.lower;
-                    const matchedItem = currentItems.find(i => i.item === dataset.label);
+                popupChartObj.data.datasets.forEach(dataset => {
+                    let lastVal = dataset.data[dataset.data.length - 1];
+                    // จำลองการขยับวิ่งเคลื่อนของข้อมูลแบบเสมือนจริงโดยอิงความสัมพันธ์จากค่าล่าสุด
+                    let change = (Math.random() - 0.5) * (lastVal * 0.02 || 1); 
+                    let newVal = lastVal + change;
+                    if(newVal < 0) newVal = 0;
+
+                    dataset.data.push(Number(newVal.toFixed(2)));
+                    dataset.data.shift(); // ดันข้อมูลเก่าออกเพื่อเลื่อนตัววิ่ง
                     
-                    let baseVal = 0;
-                    if (matchedItem) {
-                        let clean = String(matchedItem.realtime).replace(/[^\d.-]/g, '');
-                        baseVal = parseFloat(clean);
-                    }
-                    if (isNaN(baseVal)) baseVal = 0;
-
-                    // ทำการสุ่มจำลองความเคลื่อนไหวเล็กน้อย (Fluctuation) ในรอบ 3 วินาทีให้กราฟวิ่งสดต่อเนื่องอย่างเป็นธรรมชาติ
-                    let noise = (Math.random() - 0.5) * (baseVal * 0.015);
-                    let nextVal = baseVal + noise;
-                    if (baseVal === 0) nextVal = Math.random() * 5;
-
-                    if (dataset.data.length >= 10) {
-                        dataset.data.shift();
-                    }
-                    dataset.data.push(Number(nextVal.toFixed(2)));
+                    // ซิงค์บันทึกกลับไปยังฐานข้อมูลหลัก
+                    if(!trendHistory[currentActiveGroup][dataset.label]) trendHistory[currentActiveGroup][dataset.label] = [];
+                    trendHistory[currentActiveGroup][dataset.label] = [...dataset.data];
                 });
 
-                lineChart.update('none');
+                popupChartObj.update('none'); // อัปเดตกราฟแบบเร็วนุ่มนวล
             }, 3000);
         }
 
-        function closeChartModal() {
-            document.getElementById('chartModal').style.display = 'none';
-            if(modalInterval) { clearInterval(modalInterval); modalInterval = null; }
-            activeModalType = null;
+        function closeChartPopup() {
+            document.getElementById('chartPopup').style.display = 'none';
+            if(chartInterval) clearInterval(chartInterval);
+            if(popupChartObj) {
+                popupChartObj.destroy();
+                popupChartObj = null;
+            }
         }
 
         window.onload = () => document.getElementById('passInput').focus();
