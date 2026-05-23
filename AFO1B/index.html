@@ -1033,7 +1033,7 @@
         // ⚙️ [ฟังก์ชันเพิ่มใหม่] สั่งเปิดโมดอลป๊อปอัพเพื่อเรนเดอร์กราฟเส้นความละเอียดสูง
         function openChartModal(type) {
             activeTrendType = type;
-            document.getElementById('modalTitle').innerText = type === 'upper' ? '📊 Real-time Trend Graph : UPPER DATA (อัปเดตทุก 3 วิ)' : '📊 Real-time Trend Graph : LOWER DATA (อัปเดตทุก 3 วิ)';
+            document.getElementById('modalTitle').innerText = type === 'upper' ? '📊 Real-time Trend Graph : UPPER DATA' : '📊 Real-time Trend Graph : LOWER DATA';
             document.getElementById('chartModal').style.display = 'flex';
             renderTrendLineChart(type);
         }
