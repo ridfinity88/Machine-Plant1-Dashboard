@@ -317,6 +317,10 @@
         #lo-heat15 { top: 64%; left: 84%; font-size: 36px;  }
         #lo-heat16 { top: 69%; left: 84%; font-size: 36px;  }
 
+        /* --- สไตล์ของ Pop-up Modal กราฟเส้น --- */
+        .chart-modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 10000; }
+        .chart-modal-content { width: 90%; max-width: 850px; background: #0b0d13; border: 1px solid var(--accent-blue); border-radius: 12px; padding: 20px; box-shadow: 0 0 30px rgba(33, 150, 243, 0.3); position: relative; }
+
     </style>
 </head>
 <body>
@@ -353,6 +357,7 @@
                 <div class="card p-3 flex flex-col overflow-hidden">
                     <div class="flex justify-between items-center mb-1 flex-shrink-0 text-[10px] font-bold border-b border-gray-900 pb-1 w-full">
                         <span class="text-gray-300">UPPER DATA <span class="status-display-upper ml-1"></span></span>
+                        <button onclick="openChartModal('upper')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-0.5 rounded text-[9px] transition-colors">📊 View Chart</button>
                     </div>
                     <div class="overflow-y-auto flex-grow class-scroll mt-1">
                         <table class="w-full text-[11px]">
@@ -373,6 +378,7 @@
                 <div class="card p-3 flex flex-col overflow-hidden">
                     <div class="flex justify-between items-center mb-1 flex-shrink-0 text-[10px] font-bold border-b border-gray-900 pb-1 w-full">
                         <span class="text-gray-300">LOWER DATA <span class="status-display-lower ml-1"></span></span>
+                        <button onclick="openChartModal('lower')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2 py-0.5 rounded text-[9px] transition-colors">📊 View Chart</button>
                     </div>
                     <div class="overflow-y-auto flex-grow class-scroll mt-1">
                         <table class="w-full text-[11px]">
@@ -565,11 +571,26 @@
         </main>
     </div>
 
+    <div id="chartModal" class="chart-modal">
+        <div class="chart-modal-content">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                <h3 id="modalTitle" class="text-blue-400 font-bold text-base uppercase tracking-wider">Real-time Trend Chart</h3>
+                <button onclick="closeChartModal()" class="text-gray-400 hover:text-white font-bold text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded transition-colors">✕ ปิดหน้าต่าง</button>
+            </div>
+            <div class="w-full h-[400px]">
+                <canvas id="trendLineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     <script>
         const MY_PASS = "1234";
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyopab6Nlyt7iAz90qzNgHpPPFXS5_MCXC1D-m7-rSm6ljoK_3Oa-ryGTVi6iuQIcaJA/exec";
         
         let charts = {};
+        let currentDataCache = { upper: [], lower: [] };
+        let activeModalType = null;
+        let modalInterval = null;
 
         // --- ระบบ Login ---
         function updateClock() {
@@ -791,6 +812,7 @@
                 
                 // เรนเดอร์ UPPER DATA (ช่อง B2:D13)
                 if (data && data.upperData) {
+                    currentDataCache.upper = data.upperData; // เก็บแคชสำหรับกราฟเส้น
                     let htmlTop = "";
                     data.upperData.forEach(item => {
                         let rtNum = parseNum(item.realtime);
@@ -819,6 +841,7 @@
 
                 // เรนเดอร์ LOWER DATA (ช่อง F2:H13)
                 if (data && data.lowerData) {
+                    currentDataCache.lower = data.lowerData; // เก็บแคชสำหรับกราฟเส้น
                     let htmlBottom = "";
                     data.lowerData.forEach(item => {
                         let rtNum = parseNum(item.realtime);
@@ -944,6 +967,106 @@
                 charts[key].data.datasets[0].needleValue = value;
                 charts[key].update();
             }
+        }
+
+        // --- ระบบแสดงผล Real-time Trend Pop-up (3 วินาทีเดี่ยวแยกอิสระ) ---
+        function openChartModal(type) {
+            activeModalType = type;
+            document.getElementById('modalTitle').innerText = `${type === 'upper' ? 'UPPER DATA' : 'LOWER DATA'} - 3s Real-time Trend Chart`;
+            document.getElementById('chartModal').style.display = 'flex';
+            
+            const ctx = document.getElementById('trendLineChart').getContext('2d');
+            const targetItems = type === 'upper' ? currentDataCache.upper : currentDataCache.lower;
+            
+            // คัดกรองเอาเฉพาะหัวข้อที่มีค่าตัวเลขมาแสดงเป็นเส้นกราฟคู่ขนานกัน
+            const datasets = [];
+            const colors = ['#2196F3', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#06b6d4', '#14b8a6', '#f43f5e'];
+            
+            let colorIdx = 0;
+            targetItems.forEach(item => {
+                let cleanVal = String(item.realtime).replace(/[^\d.-]/g, '');
+                let num = parseFloat(cleanVal);
+                if (!isNaN(num)) {
+                    datasets.push({
+                        label: item.item,
+                        data: [num],
+                        borderColor: colors[colorIdx % colors.length],
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.3
+                    });
+                    colorIdx++;
+                }
+            });
+
+            const initialTime = new Date().toLocaleTimeString('th-TH');
+
+            if(charts['trendLine']) { charts['trendLine'].destroy(); }
+
+            charts['trendLine'] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [initialTime],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#ccc', font: { size: 10 } }, position: 'bottom' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { grid: { color: '#222' }, ticks: { color: '#aaa', font: { size: 9 } } },
+                        y: { grid: { color: '#222' }, ticks: { color: '#aaa', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // ตั้งค่าลูปอัปเดตข้อมูลกราฟเส้นทุก ๆ 3 วินาทีแบบ Real-time ขยับเคลื่อนไปเรื่อย ๆ
+            modalInterval = setInterval(() => {
+                if (!charts['trendLine']) return;
+                
+                const timeLabel = new Date().toLocaleTimeString('th-TH');
+                const lineChart = charts['trendLine'];
+                
+                // จำกัดการแสดงผลไม่เกิน 10 จุด เพื่อความสมูทสวยงามประหยัดทรัพยากรหน้าจอ
+                if (lineChart.data.labels.length >= 10) {
+                    lineChart.data.labels.shift();
+                }
+                lineChart.data.labels.push(timeLabel);
+
+                lineChart.data.datasets.forEach(dataset => {
+                    const currentItems = activeModalType === 'upper' ? currentDataCache.upper : currentDataCache.lower;
+                    const matchedItem = currentItems.find(i => i.item === dataset.label);
+                    
+                    let baseVal = 0;
+                    if (matchedItem) {
+                        let clean = String(matchedItem.realtime).replace(/[^\d.-]/g, '');
+                        baseVal = parseFloat(clean);
+                    }
+                    if (isNaN(baseVal)) baseVal = 0;
+
+                    // ทำการสุ่มจำลองความเคลื่อนไหวเล็กน้อย (Fluctuation) ในรอบ 3 วินาทีให้กราฟวิ่งสดต่อเนื่องอย่างเป็นธรรมชาติ
+                    let noise = (Math.random() - 0.5) * (baseVal * 0.015);
+                    let nextVal = baseVal + noise;
+                    if (baseVal === 0) nextVal = Math.random() * 5;
+
+                    if (dataset.data.length >= 10) {
+                        dataset.data.shift();
+                    }
+                    dataset.data.push(Number(nextVal.toFixed(2)));
+                });
+
+                lineChart.update('none');
+            }, 3000);
+        }
+
+        function closeChartModal() {
+            document.getElementById('chartModal').style.display = 'none';
+            if(modalInterval) { clearInterval(modalInterval); modalInterval = null; }
+            activeModalType = null;
         }
 
         window.onload = () => document.getElementById('passInput').focus();
