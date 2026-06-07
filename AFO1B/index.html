@@ -360,6 +360,7 @@
                     <div class="flex justify-between items-center mb-1 flex-shrink-0 text-[10px] font-bold border-b border-gray-900 pb-1 w-full">
                         <span class="text-gray-300 flex items-center gap-2">
                             UPPER DATA <span class="status-display-upper ml-1"></span>
+                            <!-- 🛠️ เปลี่ยนชื่อปุ่มและฟังก์ชันตามสั่ง -->
                             <button onclick="openChartModal('upper')" class="bg-blue-600 hover:bg-blue-500 text-white px-1.5 py-0.5 rounded text-[9px] cursor-pointer transition-colors">📈Advance DATA</button>
                         </span>
                     </div>
@@ -383,6 +384,7 @@
                     <div class="flex justify-between items-center mb-1 flex-shrink-0 text-[10px] font-bold border-b border-gray-900 pb-1 w-full">
                         <span class="text-gray-300 flex items-center gap-2">
                             LOWER DATA <span class="status-display-lower ml-1"></span>
+                            <!-- 🛠️ เปลี่ยนชื่อปุ่มและฟังก์ชันตามสั่ง -->
                             <button onclick="openChartModal('lower')" class="bg-blue-600 hover:bg-blue-500 text-white px-1.5 py-0.5 rounded text-[9px] cursor-pointer transition-colors">📈Advance DATA</button>
                         </span>
                     </div>
@@ -577,6 +579,7 @@
         </main>
     </div>
 
+    <!-- 🛠️ โมดอลได้รับการปรับปรุงสำหรับเรนเดอร์กราฟแท่ง Advance DATA -->
     <div id="chartModal" class="chart-modal" onclick="closeChartModal(event)">
         <div class="chart-modal-content" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
@@ -594,8 +597,10 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPLRn49c2IgAdHS4cgNO4GwNqghoI_ocyJ8uA4HbLHkea9uUsXWYVN-93r5xnq_dFwFQ/exec";
         
         let charts = {};
+
+        // ⚙️ 🛠️ ตัวแปรของระบบกราฟใหม่ในรูปแบบ Bar Chart พร้อมจุดเก็บข้อมูลจาก Sheet 
         let barChartInstance = null;
-        let globalDataCached = null; 
+        let globalDataCached = null; // เก็บข้อมูลล่าสุดที่ Fetch มาจาก Sheet เอาไว้ใช้วาดกราฟแท่งทันทีที่กดเปิด
 
         // --- ระบบ Login ---
         function updateClock() {
@@ -635,13 +640,13 @@
             }
         }
 
-        // --- ระบบการจัดการเกจวัดแบบอัพเกรด ---
+        // --- ระบบการจัดการเกจวัดแบบอัพเกรด (Futuristic Glow Pointer & Soft Arc) ---
         function createGauge(canvasId, type) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             
             let maxVal = 100;
             let zones = [];
-            let emoji = '📍'; 
+            let emoji = '📍'; // ตัวแปรเก็บอิโมจิปลายเข็ม
             
             if (type === 'hr') {
                 maxVal = 1700;
@@ -686,7 +691,7 @@
                 options: {
                     rotation: -90,
                     circumference: 180,
-                    cutout: '75%', 
+                    cutout: '75%', /* ปรับลดจาก 88% เป็น 75% เพื่อขยายแถบสเกลสีให้มีขนาดใหญ่ หนา และเห็นชัดเจนขึ้น */
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: { tooltip: { enabled: false }, legend: { display: false } }
@@ -697,6 +702,7 @@
                         const { ctx } = chart;
                         const score = chart.data.datasets[0].needleValue;
                         
+                        // 🛠️ คำนวณพิกัด Center ให้ขยับขึ้นมาอยู่กึ่งกลางกล่อง Canvas อย่างสมบูรณ์แบบ
                         const cx = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
                         const cy = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2 + (chart.getDatasetMeta(0).data[0].outerRadius / 4); 
                         
@@ -707,6 +713,7 @@
 
                         ctx.save();
 
+                        // 1. วาดเส้นพื้นหลังหน้าปัด (Background Track)
                         ctx.beginPath();
                         ctx.arc(cx, cy, centerR, -Math.PI, 0, false);
                         ctx.strokeStyle = '#161920';
@@ -714,6 +721,7 @@
                         ctx.lineCap = 'round';
                         ctx.stroke();
 
+                        // 2. วาดขอบแถบสีตาม Zone จริง (หนาและเด่นชัดขึ้น)
                         let startAngle = -Math.PI;
                         
                         zones.forEach(zone => {
@@ -724,31 +732,35 @@
                             ctx.beginPath();
                             ctx.arc(cx, cy, centerR, startAngle, endAngle, false);
                             ctx.strokeStyle = zone.color;
-                            ctx.lineWidth = trackWidth; 
+                            ctx.lineWidth = trackWidth; /* บังคับความหนาของสีโซนให้เต็มแทร็คหลัก เพื่อให้สเกลสีใหญ่สะใจ */
                             ctx.stroke();
                             
                             startAngle = endAngle;
                         });
 
+                        // 3. คำนวณหาตำแหน่งมุมของเข็มชี้จุดปัจจุบัน
                         let factor = score / maxVal;
                         if (factor > 1) factor = 1; if (factor < 0) factor = 0;
                         const needleAngle = -Math.PI + (factor * Math.PI);
 
+                        // 4. คำนวватьตำแหน่งพิกัดปลายเข็ม (Center ของแนวสเกลสี)
                         const textX = cx + centerR * Math.cos(needleAngle);
                         const textY = cy + centerR * Math.sin(needleAngle);
                         
+                        // 🛠️ แก้ไขพิกัดการวาดวงกลมและอิโมจิให้แสดงผลกลางหลอดพลังอย่างถูกต้องและไม่หลุดขอบ
                         ctx.beginPath();
-                        ctx.arc(textX, textY, 11, 0, 2 * Math.PI); 
-                        ctx.fillStyle = '#060608'; 
+                        ctx.arc(textX, textY, 11, 0, 2 * Math.PI); // 🛠️ ลดขนาดรัศมีวงกลมพื้นหลังจาก 14px เป็น 11px ให้ฟิตพอดีหลอดพลัง
+                        ctx.fillStyle = '#060608'; // 🛠️ เปลี่ยนเป็นสีทึบเพื่อไม่ให้แถบพลังตัดผ่านตัวอิโมจิ
                         ctx.fill();
                         ctx.strokeStyle = '#ffffff'; 
                         ctx.lineWidth = 2.5; 
                         ctx.stroke();
 
-                        ctx.font = "12px Arial"; 
+                        // 5. วาดตัวชี้บอกตำแหน่งด้วย อิโมจิ (Emoji Pointer)
+                        ctx.font = "12px Arial"; // 🛠️ ลดขนาดฟอนต์อิโมจิจาก 16px เป็น 12px เพื่อความสวยงามสมส่วนไม่ล้นวงกลม
                         ctx.textAlign = "center";
                         ctx.textBaseline = "middle";
-                        ctx.fillText(emoji, textX, textY); 
+                        ctx.fillText(emoji, textX, textY); // 🛠️ แก้ไขให้เรนเดอร์อิโมจิทุกครั้งที่มีการวาดชุดข้อมูลสำเร็จ ป้องกันอาการอิโมจิหาย
 
                         ctx.restore();
                     }
@@ -786,6 +798,7 @@
                 const response = await fetch(finalUrl);
                 const data = await response.json();
                 
+                // 🛠️ เก็บข้อมูลดิบลงใน Cache เพื่อสตรีมส่งต่อเข้าหน้าตารางกราฟแท่ง Advance DATA
                 globalDataCached = data;
 
                 const parseNum = (val) => {
@@ -794,6 +807,7 @@
                     return parseFloat(s);
                 };
 
+                // ฟังก์ชันช่วยจัดฟอร์แมตทศนิยม 2 ตำแหน่ง (ถ้าไม่ใช่วาลูตัวเลขให้ส่งค่าเดิมกลับไป)
                 const formatDisplayValue = (val) => {
                     let num = parseNum(val);
                     return !isNaN(num) ? num.toFixed(2) : val;
@@ -809,9 +823,14 @@
                     return found ? found.realtime : null;
                 };
                 
+                // เรนเดอร์ UPPER DATA (ช่อง B2:D13)
                 if (data && data.upperData) {
                     let htmlTop = "";
                     data.upperData.forEach(item => {
+                        let rtNum = parseNum(item.realtime);
+                        let nmNum = parseNum(item.normal);
+                        
+                        // ปรับให้เป็นสีเขียวตลอดเวลาตามต้องการ
                         let realtimeColor = "text-green-500";
                         htmlTop += `
                             <tr class="border-b border-gray-900 row-update">
@@ -822,18 +841,24 @@
                     });
                     tableTop.innerHTML = htmlTop;
 
+                    // 🛠️ ดึงค่าไปใส่ในกล่องสีเหลืองฝั่ง UPPER DATA (เฉพาะตัวเลขเท่านั้น)
                     document.getElementById('box-u-temp1').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 1') || '-');
                     document.getElementById('box-u-temp2').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 2') || '-');
                     document.getElementById('box-u-temp3').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 3') || '-');
-                    document.getElementById('box-u-temp4').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 4') || '-'); 
+                    document.getElementById('box-u-temp4').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 4') || '-'); // Temp Box 1 ตัวที่สอง
                     document.getElementById('box-u-steam').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Pressure Steam') || '-');
                     document.getElementById('box-u-lpg').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Pressure LPG') || '-');
                     document.getElementById('box-u-conveyor').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Current Conveyor') || '-');
                 }
 
+                // เรนเดอร์ LOWER DATA (ช่อง F2:H13)
                 if (data && data.lowerData) {
                     let htmlBottom = "";
                     data.lowerData.forEach(item => {
+                        let rtNum = parseNum(item.realtime);
+                        let nmNum = parseNum(item.normal);
+                        
+                        // ปรับให้เป็นสีเขียวตลอดเวลาตามต้องการ
                         let realtimeColor = "text-green-500";
 
                         htmlBottom += `
@@ -845,19 +870,22 @@
                     });
                     tableBottom.innerHTML = htmlBottom;
 
+                    // 🛠️ ดึงค่าไปใส่ในกล่องสีเหลืองฝั่ง LOWER DATA (เฉพาะตัวเลขเท่านั้น)
                     document.getElementById('box-l-temp1').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 1') || '-');
                     document.getElementById('box-l-temp2').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 2') || '-');
                     document.getElementById('box-l-temp3').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 3') || '-');
-                    document.getElementById('box-l-temp4').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 4') || '-'); 
+                    document.getElementById('box-l-temp4').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 4') || '-'); // Temp Box 1 ตัวที่สอง
                     document.getElementById('box-l-steam').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Pressure Steam') || '-');
                     document.getElementById('box-l-lpg').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Pressure LPG') || '-');
                     document.getElementById('box-l-conveyor').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Current Conveyor') || '-');
                 }
 
+                // --- ส่วนตรวจสอบสถานะการเชื่อมต่อ K2, K13 และไฟ LED จุด K3-K12 ---
                 if (data && data.connectionStatus) {
                     const k2Val = parseNum(data.connectionStatus.k2);
                     const k13Val = parseNum(data.connectionStatus.k13);
                     
+                    // 1. อัปเดตสถานะของกลุ่มการ์ดฝั่ง UPPER DATA ทั้งหมด (ใช้ K2)
                     const upperLabels = document.querySelectorAll('.status-display-upper');
                     upperLabels.forEach(el => {
                         if (k2Val === 1) {
@@ -869,11 +897,13 @@
                         }
                     });
 
+                    // 🛠️ ควบคุมการแสดงผลกลุ่มอิโมจิอนิเมชันฝั่ง UPPER DATA ตามเงื่อนไข K2 แยกอิสระ
                     const upperEmojiContainer = document.getElementById('upper-emoji-group');
                     if (upperEmojiContainer) {
                         upperEmojiContainer.style.display = (k2Val === 1) ? 'block' : 'none';
                     }
 
+                    // 2. อัปเดตสถานะของกลุ่มการ์ดฝั่ง LOWER DATA ทั้งหมดอย่างแยกเป็นอิสระ (ใช้ K13)
                     const lowerLabels = document.querySelectorAll('.status-display-lower');
                     lowerLabels.forEach(el => {
                         if (k13Val === 1) {
@@ -885,14 +915,16 @@
                         }
                     });
 
+                    // 🛠️ ควบคุมการแสดงผลกลุ่มอิโมจิอนิเมชันฝั่ง LOWER DATA ตามเงื่อนไข K13 แยกอิสระ
                     const lowerEmojiContainer = document.getElementById('lower-emoji-group');
                     if (lowerEmojiContainer) {
                         lowerEmojiContainer.style.display = (k13Val === 1) ? 'block' : 'none';
                     }
 
+                    // อัปเดตสถานะสีของจุดสัญญาณ LED ขยายเพิ่มเป็น 10 จุด (K3 ถึง K12) 
                     if (data.connectionStatus.k3_to_k10 && Array.isArray(data.connectionStatus.k3_to_k10)) {
                         for (let index = 0; index < 10; index++) {
-                            const currentTargetId = `dot-k${index + 3}`; 
+                            const currentTargetId = `dot-k${index + 3}`; // ผลลัพธ์จะได้ไอดีตั้งแต่ dot-k3 จนถึง dot-k12
                             const targetDotElement = document.getElementById(currentTargetId);
                             
                             if (targetDotElement) {
@@ -907,6 +939,7 @@
                     }
                 }
 
+                // --- อัปเดตค่าเกจวัด ---
                 const rawHr1 = findRealtimeValue(data.upperData, 'Burner Time');
                 const valHr1 = rawHr1 !== null ? parseNum(rawHr1) : 1158;
                 updateGaugeValue('hr1', isNaN(valHr1) ? 0 : valHr1, 'val-hr1');
@@ -938,6 +971,7 @@
             }
         }
 
+        // ปรับให้ระบบอัปเดตเกจเรียกวาดใหม่ได้อย่างสมบูรณ์แบบโดยที่ Pointer วงกลมและอิโมจิไม่หลุดหาย
         function updateGaugeValue(key, value, textId, isFloat = false) {
             document.getElementById(textId).innerText = isFloat ? value.toFixed(2) : value;
             if (charts[key]) {
@@ -946,6 +980,7 @@
             }
         }
 
+        // ⚙️ 🛠️ [ฟังก์ชันแก้ไขและเพิ่มใหม่สำหรับระบบกราฟแท่งแบบสมบูรณ์] สั่งเปิดโมดอลป๊อปอัพเพื่อเรนเดอร์กราฟแท่ง Advance DATA ทั้งระบบ Upper และ Lower
         function openChartModal(type) {
             document.getElementById('modalTitle').innerText = type === 'upper' ? '📊 Advance DATA : UPPER' : '📊 Advance DATA : LOWER';
             document.getElementById('chartModal').style.display = 'flex';
@@ -956,19 +991,21 @@
             document.getElementById('chartModal').style.display = 'none';
         }
 
-        // ⚙️ 🛠️ ฟังก์ชันเรนเดอร์กราฟแท่ง Advance DATA แยกตามเงื่อนไขเซลล์ของหน้า Sheet อย่างสมบูรณ์แบบ
+        // ⚙️ 🛠️ [ฟังก์ชันเพิ่มใหม่] สร้างและอัปเดตตัวกราฟแท่ง (Bar Chart) ตามโครงสร้างตารางและเงื่อนไข Trigger/Forecast ทูลทิปแบบไดนามิก
         function renderAdvanceBarChart(type) {
             const ctx = document.getElementById('advanceBarChart').getContext('2d');
             
+            // เตรียมโครงสร้างอาเรย์ของข้อมูลรองรับกรณีไม่มีสัญญาณตอบกลับจากเซิร์ฟเวอร์
             let labels = [];
             let heights = [];
             let triggers = [];
             let forecasts = [];
 
+            // ทำการแยกแยะการดึงข้อมูลจากจุดชุดข้อมูลตามสั่ง (Upper ดึงช่วง index 0-3, Lower ดึงช่วง index 4-7)
             if (globalDataCached && globalDataCached.advanceData && Array.isArray(globalDataCached.advanceData)) {
-                // 🛠️ กำหนดขอบเขตดัชนี (Index) ให้ตรงกับตำแหน่งของเซลล์บนหน้า Sheet
-                // type === 'upper' ดึง Index 0-3  -> [ชื่อ: F18:F21, สูง: G18:G21, Trigger: J18:J21, Forecast: K18:K21]
-                // type === 'lower' ดึง Index 4-7  -> [ชื่อ: F22:F25, สูง: G22:G25, Trigger: J22:J25, Forecast: K22:K25]
+                // กำหนดดัชนีเริ่มต้นและสิ้นสุดให้สอดคล้องกับพิกัดบน Sheet ของทั้งสองฝั่งเพื่อไม่ให้ข้อมูลปนกัน
+                // type === 'upper' -> ดัชนี 0-3 (ตรงกับช่องแถว 18 ถึง 21 ของ Sheet: F18-F21, G18-G21, J18-J21, K18-K21)
+                // type === 'lower' -> ดัชนี 4-7 (ตรงกับช่องแถว 22 ถึง 25 ของ Sheet: F22-F25, G22-G25, J22-J25, K22-K25)
                 let startIndex = (type === 'upper') ? 0 : 4;
                 let endIndex = (type === 'upper') ? 3 : 7;
                 
@@ -987,16 +1024,19 @@
                     }
                 }
             } else {
+                // ข้อมูลจำลองกรณีเซิร์ฟเวอร์หลักยังไม่ได้โหลด
                 labels = ['Burner 1', 'Burner 2', 'Burner 3', 'Burner 4'];
                 heights = [900, 880, 820, 890];
                 triggers = ['1000', '1000', '1000', '1000'];
                 forecasts = ['1100', '1120', '1050', '1110'];
             }
 
+            // ทำลายอินสแตนซ์กราฟเดิมเพื่อป้องกันการซ้อนทับกันเมื่อเปลี่ยนหน้าหรือคลิกสลับแท็บไปมา
             if (barChartInstance) {
                 barChartInstance.destroy();
             }
 
+            // สร้าง Bar Chart แท่งแนวตั้งในสไตล์ Dark Mode พร้อมเส้นควบคุมแนวนอน (Annotation)
             barChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -1007,7 +1047,8 @@
                         backgroundColor: 'rgba(33, 150, 243, 0.75)',
                         borderColor: '#2196F3',
                         borderWidth: 1.5,
-                        barPercentage: 0.45, 
+                        barPercentage: 0.45, // ปรับขนาดหน้ากว้างแท่งให้สมส่วนใกล้เคียงรูปตัวอย่าง
+                        // แนบอาเรย์เสริมเพื่อใช้งานในกล่องสลัก Tooltip บนแกนแท่งชี้
                         triggersData: triggers,
                         forecastsData: forecasts
                     }]
@@ -1022,13 +1063,13 @@
                         },
                         y: {
                             min: 0,
-                            max: 1400, 
+                            max: 1400, // กำหนดขอบเขตความสูงเผื่อไว้สำหรับแสดงเส้น Critical (1200)
                             grid: { color: 'rgba(255,255,255,0.05)' },
                             ticks: { color: '#aaa', stepSize: 200 }
                         }
                     },
                     plugins: {
-                        legend: { display: false }, 
+                        legend: { display: false }, // ซ่อนป้ายชื่อ Dataset หลักเพื่อความสะอาดตาตรงตามภาพวาด
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.95)',
                             titleColor: '#2196F3',
@@ -1040,6 +1081,7 @@
                             padding: 10,
                             displayColors: false,
                             callbacks: {
+                                // 🛠6 ฟังก์ชันการจัดการปรับแต่งเนื้อหากล่องข้อความคำพูด (Tooltip) ให้ขึ้นบรรทัดใหม่แสดง Trigger และ Forecast
                                 label: function(context) {
                                     let index = context.dataIndex;
                                     let ds = context.dataset;
@@ -1055,13 +1097,14 @@
                                 }
                             }
                         },
+                        // 🛠6 ตกแต่งเส้นกำกับแบ่งระดับเขตปลอดภัยความคุ้มครองระดับความสูงตามตัวอย่าง S__76537858.jpg
                         annotation: {
                             annotations: {
                                 triggerLine: {
                                     type: 'line',
                                     yMin: 1000,
                                     yMax: 1000,
-                                    borderColor: '#fbc02d', 
+                                    borderColor: '#fbc02d', // เส้นสีเหลือง
                                     borderWidth: 2,
                                     label: {
                                         display: true,
@@ -1076,7 +1119,7 @@
                                     type: 'line',
                                     yMin: 1200,
                                     yMax: 1200,
-                                    borderColor: '#c62828', 
+                                    borderColor: '#c62828', // เส้นสีแดง
                                     borderWidth: 2,
                                     label: {
                                         display: true,
