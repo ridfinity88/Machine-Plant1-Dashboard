@@ -6,1135 +6,485 @@
     <title>Machine Dashboard - Realtime</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- เพิ่ม Plugin สำหรับวาดเส้นแนวนอน (Annotation) บนกราฟของ Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1"></script>
     <style>
         :root { 
             /* ปรับความกว้างคอลัมน์ซ้ายจาก max-content เป็น 340px เพื่อให้ดูกว้างและมีพื้นที่สำหรับชื่อหัวข้อใหม่ */
             --width-col-left: 340px; 
-            --width-col-center: 1fr; 
-            --width-col-right: auto; 
-            --bg-color: #000;
-            --card-bg: #000; /* ปรับเป็นสีดำสนิทให้เนียนไปกับพื้นหลัง */
-            --card-border: rgba(33, 150, 243, 0.5); /* 🛠️ ปรับสีขอบการ์ดหลักให้จางลงครึ่งหนึ่ง (Opacity 0.5) */
-            --card-gray: #424242;
-            --card-green: #2e7d32;
-            --card-red: #c62828;
-            --card-yellow: #fbc02d;
-            --card-blue: #2196F3;
-            --text-color: #fff;
-            --accent-blue: #2196F3;
-        }
-        
-        body { background: var(--bg-color); color: var(--text-color); margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        /* สไตล์หน้า Login */
-        #loginPage { position: fixed; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { width: 320px; background: #111; padding: 30px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .input-group { position: relative; width: 100%; }
-        .login-box input { width: 100%; height: 45px; background: #222; border: 1px solid #444; border-radius: 4px; color: #fff; padding: 0 40px 0 12px; outline: none; text-align: center; }
-        .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 5px; }
-        .login-btn { width: 100%; height: 45px; background: var(--accent-blue); color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .login-btn:hover { background: #1976D2; transform: translateY(-2px); }
-        .error-text { color: var(--card-red); font-size: 13px; text-align: center; display: none; }
-
-        #dashboardPage { display: none; flex-direction: column; height: 100vh; max-height: 100vh; overflow: hidden; background: var(--bg-color); }
-        .dashboard-container { display: grid; grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right); gap: 8px; padding: 40px 10px 10px 10px; height: 100vh; max-height: 100vh; overflow: hidden; position: relative; }
-        
-        /* 🛠️ ปรับแต่งขอบของการ์ดทั่วไปให้เป็นสีฟ้าและมน 6px เหมือนการ์ดเกจ */
-        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 6px; position: relative; }
-
-        /* จัดเรียงกลุ่มข้อมูลฝั่งซ้ายบน: ปุ่ม Home -> วันเวลา -> สถานะการอัปเดต */
-        .header-info { 
-            position: absolute; 
-            top: 5px; 
-            left: 10px; 
-            z-index: 10; 
-            display: flex; 
-            gap: 8px; 
-            align-items: center; 
-        }
-        .live-clock { background: #111; padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; white-space: nowrap; font-weight: bold; color: #fff; height: 22px; display: flex; align-items: center; border: 1px solid #222; }
-        #syncStatus { font-size: 0.9rem; }
-
-        /* หัวข้อใหญ่อยู่ตรงกลางด้านบน */
-        .main-title { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; font-weight: bold; color: #ccc; z-index: 5; text-transform: uppercase; }
-
-        /* ลายน้ำมุมขวาบน */
-        .watermark { position: absolute; top: 11px; right: 10px; font-size: 0.6rem; color: rgba(255, 255, 255, 0.2); z-index: 10; font-weight: bold; user-select: none; }
-
-        /* Animation สำหรับไอคอนโหลด */
-        .spin { animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        /* แถวข้อมูลกระพริบตอนอัปเดต */
-        .row-update { animation: highlight 1s ease-out; }
-        @keyframes highlight { 0% { background: rgba(33, 150, 243, 0.1); } 100% { background: transparent; } }
-
-        /* การ์ดเกจย่อยฝั่งขวา */
-        .gauge-card { 
-            background: #060608; 
-            border: 1px solid rgba(33, 150, 243, 0.5); /* 🛠️ ปรับสีขอบเกจให้จางลงครึ่งหนึ่งตามสั่ง */
-            border-radius: 6px; 
-            padding: 8px 12px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; /* จัดกลุ่มเนื้อหาให้อยู่กลางการ์ดในแนวตั้ง */
-            align-items: center;
-            width: 260px;
-            height: 100%;
-            overflow: hidden;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
-            transition: border 0.3s;
-        }
-        .gauge-container { 
-            position: relative; 
-            width: 100%; 
-            max-width: 165px; /* ขยายขนาดกรอบเพื่อให้เห็นสเกลสีชัดขึ้น */
-            margin: auto; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* 🛠️ แก้ไข CSS ให้ข้อความดิจิทัลขยับขึ้นมาอยู่กึ่งกลางวงกลมอย่างสมบูรณ์แบบ */
-        .gauge-center-text { 
-            position: absolute; 
-            top: 50%;
-            left: 0;
-            right: 0;
-            transform: translateY(-15%); /* ดึงเยื้องขึ้นเล็กน้อยเพื่อให้บาลานซ์กับทรงครึ่งวงกลมพอดี */
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            text-align: center;
-            z-index: 1; /* นำข้อความมาอยู่เหนือเส้นเข็มวัดเพื่อความชัดเจน */
-        }
-
-        /* --- สไตล์ของจุดไฟสัญญาณ LED แบบมีมิติเรืองแสง --- */
-        .led-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            transition: background 0.3s, box-shadow 0.3s;
-            background-color: #4b5563; /* สีเริ่มต้นเป็นเทาเข้ม */
-            position: absolute; /* ยึดตำแหน่งเทียบกับกล่องภาพครอบ .image-wrapper */
-            z-index: 20;
-            transform: translate(-50%, -50%); /* ช่วยให้จุดกึ่งกลางของไฟ LED ตรงกับพิกัดจริงบนภาพพอดี */
-        }
-        .led-green {
-            background-color: #10b981 !important;
-            box-shadow: 0 0 12px #10b981, 0 0 5px #10b981;
-        }
-        .led-red {
-            background-color: #ef4444 !important;
-            box-shadow: 0 0 12px #ef4444, 0 0 5px #ef4444;
-        }
-
-        /* 🛠️ ปรับกล่องหุ้มรูปภาพให้อยู่ในสัดส่วนจริงของรูป เพื่อป้องกันจุดเลื่อนหลุดเมื่อขยายหน้าจอใหญ่ */
-        .image-wrapper {
-            position: relative;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            max-height: 90%;
-            max-width: 90%;
-        }
-
-        /* 🛠️ ส่วนตั้งค่าตำแหน่งเป็น % เทียบกับขนาดภาพจริง ไม่ว่ารูปจะยืดหรือหดตามขนาดจอ จุดจะอยู่ที่เดิมบนภาพเสมอ */
-        #dot-k3  { top: 23%;  left: 25%; }
-        #dot-k4  { top: 23%;  left: 32%; }
-        #dot-k5  { top: 23%;  left: 71%; }
-        #dot-k6  { top: 23%;  left: 78%; }
-        
-        #dot-k7  { top: 61%;  left: 25%; }
-        #dot-k8  { top: 61%;  left: 32%; }
-        #dot-k9  { top: 61%;  left: 71%; }
-        #dot-k10 { top: 61%;  left: 78%; }
-        
-        /* เพิ่มตำแหน่งพิกัดเป้าหมายสำหรับจุดไฟสัญญาณตัวใหม่ K11 และ K12 */
-        #dot-k11 { top: 8%;  left: 24%; }
-        #dot-k12 { top: 8%;  left: 70%; }
-        
-        /* --- สไตล์กล่องข้อความสีเหลืองตัวหนังสือดำสำหรับแสดงค่า Temp/Pressure/Current --- */
-        .yellow-value-box {
-            position: absolute;
-            background-color: #facc15; /* สีเหลือง Tailwind (yellow-400) */
-            color: #000000;            /* ตัวหนังสือสีดำ */
-            padding: 2px 0px;          /* ปรับ padding แนวนอนเป็น 0 เพื่อกำหนดความกว้างตายตัวได้อย่างแม่นยำ */
-            font-size: 11px;
-            font-weight: bold;
-            font-family: monospace;
-            border-radius: 3px;
-            border: none;             /* ไม่มีเส้นขอบ */
-            z-index: 30;
-            transform: translate(-50%, -50%);
-            white-space: nowrap;
-            width: 52px;              /* 🛠️ ล็อกความกว้างกล่องให้เท่ากันถาวร รองรับตัวเลขยาว เช่น 123.45 */
-            box-sizing: border-box;    /* ป้องกันขนาดกล่องเพี้ยนจาก padding และ border */
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
-
-        /* 🛠️ ส่วนตั้งค่าพิกัดตำแหน่งเป็น % ของกล่องสีเหลืองแต่ละกล่องภายในการ์ดกลางล่าง (ปรับแก้ที่นี่ได้เลย) */
-        /* UPPER DATA กลุ่มที่ 1 (7 กล่อง) */
-        #box-u-temp1    { top: 41%; left: 20%; }
-        #box-u-temp2    { top: 41%; left: 38%; }
-        #box-u-temp3    { top: 41%; left: 65%; }
-        #box-u-temp4    { top: 41%; left: 84%; } /* สำหรับ Temp Box 1 (ตัวที่สองตามที่ระบุ) */
-        #box-u-steam    { top: 10%; left: 25%; }
-        #box-u-lpg      { top: 10%; left: 31%; }
-        #box-u-conveyor { top: 41%; left: 101%; }
-
-        /* LOWER DATA กลุ่มที่ 2 (7 กล่อง) */
-        #box-l-temp1    { top: 73%; left: 20%; }
-        #box-l-temp2    { top: 73%; left: 38%; }
-        #box-l-temp3    { top: 73%; left: 65%; }
-        #box-l-temp4    { top: 73%; left: 84%; } /* สำหรับ Temp Box 1 (ตัวที่สองตามที่ระบุ) */
-        #box-l-steam    { top: 10%; left: 71%; }
-        #box-l-lpg      { top: 10%; left: 77%; }
-        #box-l-conveyor { top: 73%; left: 101%; }
-
-        /* ======================================================== */
-        /* 🛠️ ส่วนเพิ่มสไตล์ CSS สำหรับระบบอนิเมชันอิโมจิ การ์ดกลางด้านบน */
-        /* ======================================================== */
-        .animated-emoji {
-            position: absolute;
-            z-index: 25;
-            transform: translate(-50%, -50%);
-            user-select: none;
-            pointer-events: none;
-            font-style: normal;
-        }
-
-        /* คอนเทนเนอร์แยกอิสระระหว่าง UPPER และ LOWER */
-        #upper-emoji-group, #lower-emoji-group {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            display: none; /* เริ่มต้นซ่อนไว้ จะแสดงเมื่อสถานะเป็น Status OK เท่านั้น */
-        }
-
-        /* 1. อนิเมชันเฟืองหมุนช้า ๆ อยู่กับที่ */
-        .spin-slow {
-            animation: spinGear 3s linear infinite;
-        }
-        @keyframes spinGear {
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        /* 2. อนิเมชันไฟกระพริบความร้อนวูบวาบ (ขยายใหญ่ขึ้นเล็กน้อย) */
-        .pulse-fast {
-            font-size: 18px; /* ปรับขนาดให้ใหญ่ขึ้นเล็กน้อยตามสั่ง */
-            animation: pulseFast 0.8s ease-in-out infinite alternate;
-        }
-        @keyframes pulseFast {
-            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.4; }
-            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-        }
-
-        /* 3. อนิเมชันเคลื่อนที่ซ้ายไปขวาช้า ๆ แล้วจางหายไป (ระยะไม่มาก) */
-        .move-fade {
-            animation: moveFadeLoop 4s linear infinite;
-        }
-        @keyframes moveFadeLoop {
-            0% {
-                transform: translate(-150%, -50%);
-                opacity: 0;
-            }
-            15% {
-                opacity: 1;
-            }
-            85% {
-                opacity: 1;
-            }
-            100% {
-                transform: translate(50%, -50%);
-                opacity: 0;
-            }
-        }
-
-        /* 📍 ส่วนพิกัดตำแหน่งอิโมจิกลุ่ม UPPER DATA (สามารถปรับ % เปลี่ยนพิกัดตรงนี้ได้เลย) */
-        #up-gear1 { top: 30%; left: 6%; font-size: 14px; }
-        #up-gear2 { top: 30%; left: 93.5%; font-size: 14px; }
-        #up-cock  { top: 22%; left: 5%; font-size: 36px; } /* ไก่หันขวาจะครอบสไตล์พิเศษใน HTML */
-        #up-drum  { top: 22%; left: 95%; font-size: 36px; }
-        
-        #up-heat1 { top: 30%; left: 16%; font-size: 36px;  }
-        #up-heat2 { top: 35%; left: 16%; font-size: 36px;  }
-        
-        #up-heat3 { top: 30%; left: 24%; font-size: 36px;  }
-        #up-heat4 { top: 35%; left: 24%; font-size: 36px;  }
-        
-        #up-heat5 { top: 30%; left: 33%; font-size: 36px;  }
-        #up-heat6 { top: 35%; left: 33%; font-size: 36px;  }
-        
-        #up-heat7 { top: 30%; left: 41%; font-size: 36px;  }
-        #up-heat8 { top: 35%; left: 41%; font-size: 36px;  }
-        
-        #up-heat9  { top: 30%; left: 59%; font-size: 36px;  }
-        #up-heat10 { top: 35%; left: 59%; font-size: 36px;  }
-        
-        #up-heat11 { top: 30%; left: 67%; font-size: 36px;  }
-        #up-heat12 { top: 35%; left: 67%; font-size: 36px;  }
-        
-        #up-heat13 { top: 30%; left: 76%; font-size: 36px;  }
-        #up-heat14 { top: 35%; left: 76%; font-size: 36px;  }
-        
-        #up-heat15 { top: 30%; left: 84%; font-size: 36px;  }
-        #up-heat16 { top: 35%; left: 84%; font-size: 36px;  }
-
-        /* 📍 ส่วนพิกัดตำแหน่งอิโมจิกลุ่ม LOWER DATA (สามารถปรับ % เปลี่ยนพิกัดตรงนี้ได้เลย) */
-        #lo-gear1 { top: 63%; left: 6%; font-size: 14px; }
-        #lo-gear2 { top: 63%; left: 93.5%; font-size: 14px; }
-        #lo-cock  { top: 56%; left: 5%; font-size: 36px; } /* ไก่หันขวาจะครอบสไตล์พิเศษใน HTML */
-        #lo-drum  { top: 56%; left: 95%; font-size: 36px; }
-        
-        #lo-heat1 { top: 64%; left: 16%; font-size: 36px;  }
-        #lo-heat2 { top: 69%; left: 16%; font-size: 36px;  }
-        
-        #lo-heat3 { top: 64%; left: 24%; font-size: 36px;  }
-        #lo-heat4 { top: 69%; left: 24%; font-size: 36px;  }  
-        
-        #lo-heat5 { top: 64%; left: 33%; font-size: 36px;  }
-        #lo-heat6 { top: 69%; left: 33%; font-size: 36px;  }
-        
-        #lo-heat7 { top: 64%; left: 41%; font-size: 36px;  }
-        #lo-heat8 { top: 69%; left: 41%; font-size: 36px;  }
-        
-        #lo-heat9  { top: 64%; left: 59%; font-size: 36px;  }
-        #lo-heat10 { top: 69%; left: 59%; font-size: 36px;  }
-        
-        #lo-heat11 { top: 64%; left: 67%; font-size: 36px;  }
-        #lo-heat12 { top: 69%; left: 67%; font-size: 36px;  }
-        
-        #lo-heat13 { top: 64%; left: 76%; font-size: 36px;  }
-        #lo-heat14 { top: 69%; left: 76%; font-size: 36px;  }
-        
-        #lo-heat15 { top: 64%; left: 84%; font-size: 36px;  }
-        #lo-heat16 { top: 69%; left: 84%; font-size: 36px;  }
-
-        /* ⚙️ สไตล์สำหรับโมดอล Pop-up กราฟแท่งที่ปรับปรุงใหม่ */
-        .chart-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; justify-content: center; align-items: center; padding: 20px; }
-        .chart-modal-content { background: #0b0e14; border: 1px solid var(--accent-blue); border-radius: 12px; width: 90%; max-width: 1000px; height: 80vh; padding: 24px; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(33,150,243,0.3); }
-
-    </style>
-</head>
-<body>
-
-    <div id="loginPage">
-        <div class="login-box">
-            <h2 class="text-center text-blue-500 font-bold text-xl uppercase tracking-widest">Login</h2>
-            <div class="input-group">
-                <input type="password" id="passInput" placeholder="รหัสผ่าน" onkeypress="handleEnter(event)" autocomplete="off">
-                <button type="button" class="eye-btn" onclick="togglePass()"><span id="eyeIcon">👁️</span></button>
-            </div>
-            <button class="login-btn" onclick="checkLogin()">เข้าสู่ระบบ</button>
-            <p id="errorTxt" class="error-text">รหัสผ่านไม่ถูกต้อง</p>
-        </div>
-    </div>
-
-    <div id="dashboardPage">
-        <main class="dashboard-container">
-            
-            <div class="header-info">
-                <a href="../index.html" class="flex items-center justify-center bg-[#111] hover:bg-[#222] transition-colors text-white rounded border border-[#333] font-bold text-[0.7rem] h-[22px] px-2" title="กลับหน้าหลัก">
-                    🏠 Home
-                </a>
-                <div class="live-clock" id="clock">00/00/0000 00:00:00</div>
-                <div id="syncStatus">✅</div>
-            </div>
-
-            <div class="main-title">Dashboard AFO1B</div>
-
-            <div class="watermark">RiDFinity Design</div>
-
-            <div class="grid grid-rows-2 gap-3 min-w-[280px] h-100 overflow-hidden">
-                
-                <div class="card p-3 flex flex-col overflow-hidden">
-                    <div class="flex justify-between items-center mb-1 flex-shrink-0 text-[10px] font-bold border-b border-gray-900 pb-1 w-full">
-                        <span class="text-gray-300 flex items-center gap-2">
-                            UPPER DATA <span class="status-display-upper ml-1"></span>
-                            <!-- 🛠️ เปลี่ยนชื่อปุ่มและฟังก์ชันตามสั่ง -->
-                            <button onclick="openChartModal('upper')" class="bg-blue-600 hover:bg-blue-500 text-white px-1.5 py-0.5 rounded text-[9px] cursor-pointer transition-colors">📈Advance DATA</button>
-                        </span>
-                    </div>
-                    <div class="overflow-y-auto flex-grow class-scroll mt-1">
-                        <table class="w-full text-[11px]">
-                            <thead class="text-blue-400 border-b border-gray-900 text-left sticky top-0 bg-[#000] z-10">
-                                <tr>
-                                    <th class="pb-1 pr-4 w-[50%]">รายการ</th>
-                                    <th class="text-center pb-1 pr-4 w-[28%]">Real Time Data</th>
-                                    <th class="text-right pb-1 w-[22%]">ค่าปกติ</th>
-                                </tr>
-                            </thead>
-                        </table>
-                        <table class="w-full text-[11px]">
-                            <tbody id="data-table-top"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="card p-3 flex flex-col overflow-hidden">
-                    <div class="flex justify-between items-center mb-1 flex-shrink-0 text-[10px] font-bold border-b border-gray-900 pb-1 w-full">
-                        <span class="text-gray-300 flex items-center gap-2">
-                            LOWER DATA <span class="status-display-lower ml-1"></span>
-                            <!-- 🛠️ เปลี่ยนชื่อปุ่มและฟังก์ชันตามสั่ง -->
-                            <button onclick="openChartModal('lower')" class="bg-blue-600 hover:bg-blue-500 text-white px-1.5 py-0.5 rounded text-[9px] cursor-pointer transition-colors">📈Advance DATA</button>
-                        </span>
-                    </div>
-                    <div class="overflow-y-auto flex-grow class-scroll mt-1">
-                        <table class="w-full text-[11px]">
-                            <thead class="text-blue-400 border-b border-gray-900 text-left sticky top-0 bg-[#000] z-10">
-                                <tr>
-                                    <th class="pb-1 pr-4 w-[50%]">รายการ</th>
-                                    <th class="text-center pb-1 pr-4 w-[28%]">Real Time Data</th>
-                                    <th class="text-right pb-1 w-[22%]">ค่าปกติ</th>
-                                </tr>
-                            </thead>
-                        </table>
-                        <table class="w-full text-[11px]">
-                            <tbody id="data-table-bottom"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-rows-3 gap-3 h-100 overflow-hidden">
-                <div class="card flex items-center justify-center overflow-hidden">
-                    <div class="image-wrapper">
-                        <img src="cen.png" class="max-h-[90%] max-w-[90%] object-contain">
-                        
-                        <div id="upper-emoji-group">
-                            <i id="up-gear1" class="animated-emoji spin-slow">⚙️</i>
-                            <i id="up-gear2" class="animated-emoji spin-slow">⚙️</i>
-                            <div id="up-cock" class="animated-emoji move-fade"><i class="inline-block scale-x-[-1] not-italic">🐓</i></div>
-                            <i id="up-drum" class="animated-emoji move-fade">🍗</i>
-                            <i id="up-heat1" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat2" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat3" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat4" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat5" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat6" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat7" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat8" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat9" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat10" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat11" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat12" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat13" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat14" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat15" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="up-heat16" class="animated-emoji pulse-fast">♨️</i>
-                        </div>
-
-                        <div id="lower-emoji-group">
-                            <i id="lo-gear1" class="animated-emoji spin-slow">⚙️</i>
-                            <i id="lo-gear2" class="animated-emoji spin-slow">⚙️</i>
-                            <div id="lo-cock" class="animated-emoji move-fade"><i class="inline-block scale-x-[-1] not-italic">🐓</i></div>
-                            <i id="lo-drum" class="animated-emoji move-fade">🍗</i>
-                            <i id="lo-heat1" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat2" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat3" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat4" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat5" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat6" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat7" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat8" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat9" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat10" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat11" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat12" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat13" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat14" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat15" class="animated-emoji pulse-fast">♨️</i>
-                            <i id="lo-heat16" class="animated-emoji pulse-fast">♨️</i>
-                        </div>
-                    </div>
-                </div>
-                <div class="card flex items-center justify-center overflow-hidden">
-                    <div class="image-wrapper">
-                        <img src="in.png" class="w-full h-full object-contain">
-                        <div id="dot-k3" class="led-dot"></div>
-                        <div id="dot-k4" class="led-dot"></div>
-                        <div id="dot-k5" class="led-dot"></div>
-                        <div id="dot-k6" class="led-dot"></div>
-                        <div id="dot-k7" class="led-dot"></div>
-                        <div id="dot-k8" class="led-dot"></div>
-                        <div id="dot-k9" class="led-dot"></div>
-                        <div id="dot-k10" class="led-dot"></div>
-                        <div id="dot-k11" class="led-dot"></div>
-                        <div id="dot-k12" class="led-dot"></div>
-                    </div>
-                </div>
-                <div class="card flex items-center justify-center overflow-hidden">
-                    <div class="image-wrapper">
-                        <img src="out.png" class="w-full h-full object-contain">
-                        
-                        <div id="box-u-temp1" class="yellow-value-box">-</div>
-                        <div id="box-u-temp2" class="yellow-value-box">-</div>
-                        <div id="box-u-temp3" class="yellow-value-box">-</div>
-                        <div id="box-u-temp4" class="yellow-value-box">-</div>
-                        <div id="box-u-steam" class="yellow-value-box">-</div>
-                        <div id="box-u-lpg" class="yellow-value-box">-</div>
-                        <div id="box-u-conveyor" class="yellow-value-box">-</div>
-
-                        <div id="box-l-temp1" class="yellow-value-box">-</div>
-                        <div id="box-l-temp2" class="yellow-value-box">-</div>
-                        <div id="box-l-temp3" class="yellow-value-box">-</div>
-                        <div id="box-l-temp4" class="yellow-value-box">-</div>
-                        <div id="box-l-steam" class="yellow-value-box">-</div>
-                        <div id="box-l-lpg" class="yellow-value-box">-</div>
-                        <div id="box-l-conveyor" class="yellow-value-box">-</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 grid-rows-3 gap-3 justify-items-end h-100 overflow-hidden">
-                
-                <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[10px] font-bold border-b border-gray-900 pb-1 w-full flex-shrink-0">
-                        <span class="text-gray-300">UPPER (Burner Time) <span class="status-display-upper ml-1"></span></span>
-                    </div>
-                    <div class="gauge-container flex-grow mt-1">
-                        <canvas id="gauge-hr1"></canvas>
-                        <div class="gauge-center-text">
-                            <span id="val-hr1" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">1158</span>
-                            <span class="text-[9px] text-gray-400 mt-0.5">ชั่วโมง</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[10px] font-bold border-b border-gray-900 pb-1 w-full flex-shrink-0">
-                        <span class="text-gray-300">LOWER (Burner Time) <span class="status-display-lower ml-1"></span></span>
-                    </div>
-                    <div class="gauge-container flex-grow mt-1">
-                        <canvas id="gauge-hr2"></canvas>
-                        <div class="gauge-center-text">
-                            <span id="val-hr2" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">852</span>
-                            <span class="text-[9px] text-gray-400 mt-0.5">ชั่วโมง</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[10px] font-bold border-b border-gray-900 pb-1 w-full flex-shrink-0">
-                        <span class="text-gray-300">UPPER (Current Conveyor) <span class="status-display-upper ml-1"></span></span>
-                    </div>
-                    <div class="gauge-container flex-grow mt-1">
-                        <canvas id="gauge-cur1"></canvas>
-                        <div class="gauge-center-text">
-                            <span id="val-cur1" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">2.06</span>
-                            <span class="text-[9px] text-gray-400 mt-0.5">แอมป์ (A)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[10px] font-bold border-b border-gray-900 pb-1 w-full flex-shrink-0">
-                        <span class="text-gray-300">LOWER (Current Conveyor) <span class="status-display-lower ml-1"></span></span>
-                    </div>
-                    <div class="gauge-container flex-grow mt-1">
-                        <canvas id="gauge-cur2"></canvas>
-                        <div class="gauge-center-text">
-                            <span id="val-cur2" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">2.05</span>
-                            <span class="text-[9px] text-gray-400 mt-0.5">แอมป์ (A)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[10px] font-bold border-b border-gray-900 pb-1 w-full flex-shrink-0">
-                        <span class="text-gray-300">UPPER (Temp) <span class="status-display-upper ml-1"></span></span>
-                    </div>
-                    <div class="gauge-container flex-grow mt-1">
-                        <canvas id="gauge-temp1"></canvas>
-                        <div class="gauge-center-text">
-                            <span id="val-temp1" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">250</span>
-                            <span class="text-[9px] text-gray-400 mt-0.5">องศาเซลเซียส</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gauge-card">
-                    <div class="flex justify-between items-center text-[10px] font-bold border-b border-gray-900 pb-1 w-full flex-shrink-0">
-                        <span class="text-gray-300">LOWER (Temp) <span class="status-display-lower ml-1"></span></span>
-                    </div>
-                    <div class="gauge-container flex-grow mt-1">
-                        <canvas id="gauge-temp2"></canvas>
-                        <div class="gauge-center-text">
-                            <span id="val-temp2" class="text-2xl font-black tracking-tight text-white font-mono bg-black/40 px-1 rounded">248</span>
-                            <span class="text-[9px] text-gray-400 mt-0.5">องศาเซลเซียส</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- 🛠️ โมดอลได้รับการปรับปรุงสำหรับเรนเดอร์กราฟแท่ง Advance DATA -->
-    <div id="chartModal" class="chart-modal" onclick="closeChartModal(event)">
-        <div class="chart-modal-content" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
-                <h3 id="modalTitle" class="text-lg font-bold text-blue-400">Advance DATA</h3>
-                <button onclick="document.getElementById('chartModal').style.display='none'" class="text-gray-400 hover:text-white text-xl font-bold cursor-pointer">&times;</button>
-            </div>
-            <div class="flex-grow w-full h-[calc(100%-60px)]">
-                <canvas id="advanceBarChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const MY_PASS = "1234";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo0jdDJ4jiDsERX7n8JfRAf0tDFsS-hxOZc6Ea-3XL7pvENdc5yO5uq-3k7AahH7Kbtw/exec";
-        
-        let charts = {};
-
-        // ⚙️ 🛠️ ตัวแปรของระบบกราฟใหม่ในรูปแบบ Bar Chart พร้อมจุดเก็บข้อมูลจาก Sheet 
-        let barChartInstance = null;
-        let globalDataCached = null; // เก็บข้อมูลล่าสุดที่ Fetch มาจาก Sheet เอาไว้ใช้วาดกราฟแท่งทันทีที่กดเปิด
-
-        // --- ระบบ Login ---
-        function updateClock() {
-            const now = new Date();
-            const options = { 
-                weekday: 'short', 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit', 
-                hour12: false 
-            };
-            document.getElementById('clock').innerText = now.toLocaleDateString('th-TH', options);
-        }
-
-        function handleEnter(e) { if (e.key === 'Enter') checkLogin(); }
-
-        function togglePass() {
-            const input = document.getElementById('passInput');
-            const icon = document.getElementById('eyeIcon');
-            input.type = (input.type === "password") ? "text" : "password";
-            icon.innerText = (input.type === "password") ? "👁️" : "🙈";
-        }
-
-        function checkLogin() {
-            if (document.getElementById('passInput').value === MY_PASS) {
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('dashboardPage').style.display = 'flex';
-                initGauges();
-                startServices();
-            } else {
-                document.getElementById('errorTxt').style.display = 'block';
-                document.getElementById('passInput').value = '';
-                document.getElementById('passInput').focus();
-            }
-        }
-
-        // --- ระบบการจัดการเกจวัดแบบอัพเกรด (Futuristic Glow Pointer & Soft Arc) ---
-        function createGauge(canvasId, type) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            
-            let maxVal = 100;
-            let zones = [];
-            let emoji = '📍'; // ตัวแปรเก็บอิโมจิปลายเข็ม
-            
-            if (type === 'hr') {
-                maxVal = 1700;
-                zones = [
-                    { limit: 1200, color: '#10b981' }, 
-                    { limit: 1450, color: '#f59e0b' }, 
-                    { limit: 1700, color: '#ef4444' }  
-                ];
-                emoji = '🍗';
-            } else if (type === 'current') {
-                maxVal = 4.0;
-                zones = [
-                    { limit: 1.80, color: '#ef4444' },
-                    { limit: 1.95, color: '#f59e0b' },
-                    { limit: 2.25, color: '#10b981' },
-                    { limit: 2.40, color: '#f59e0b' },
-                    { limit: 4.00, color: '#ef4444' }
-                ];
-                emoji = '⚡';
-            } else if (type === 'temp') {
-                maxVal = 350;
-                zones = [
-                    { limit: 235, color: '#ef4444' },
-                    { limit: 240, color: '#f59e0b' },
-                    { limit: 255, color: '#10b981' },
-                    { limit: 260, color: '#f59e0b' },
-                    { limit: 350, color: '#ef4444' }
-                ];
-                emoji = '🔥';
-            }
-
-            return new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    datasets: [{
-                        data: [maxVal],
-                        backgroundColor: ['rgba(255,255,255,0.03)'],
-                        borderWidth: 0,
-                        needleValue: 0
-                    }]
-                },
-                options: {
-                    rotation: -90,
-                    circumference: 180,
-                    cutout: '75%', /* ปรับลดจาก 88% เป็น 75% เพื่อขยายแถบสเกลสีให้มีขนาดใหญ่ หนา และเห็นชัดเจนขึ้น */
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: { tooltip: { enabled: false }, legend: { display: false } }
-                },
-                plugins: [{
-                    id: 'futuristicGauge',
-                    afterDatasetsDraw(chart) {
-                        const { ctx } = chart;
-                        const score = chart.data.datasets[0].needleValue;
-                        
-                        // 🛠️ คำนวณพิกัด Center ให้ขยับขึ้นมาอยู่กึ่งกลางกล่อง Canvas อย่างสมบูรณ์แบบ
-                        const cx = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
-                        const cy = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2 + (chart.getDatasetMeta(0).data[0].outerRadius / 4); 
-                        
-                        const outerR = chart.getDatasetMeta(0).data[0].outerRadius;
-                        const innerR = chart.getDatasetMeta(0).data[0].innerRadius;
-                        const trackWidth = outerR - innerR;
-                        const centerR = (outerR + innerR) / 2;
-
-                        ctx.save();
-
-                        // 1. วาดเส้นพื้นหลังหน้าปัด (Background Track)
-                        ctx.beginPath();
-                        ctx.arc(cx, cy, centerR, -Math.PI, 0, false);
-                        ctx.strokeStyle = '#161920';
-                        ctx.lineWidth = trackWidth;
-                        ctx.lineCap = 'round';
-                        ctx.stroke();
-
-                        // 2. วาดขอบแถบสีตาม Zone จริง (หนาและเด่นชัดขึ้น)
-                        let startAngle = -Math.PI;
-                        
-                        zones.forEach(zone => {
-                            let endFactor = zone.limit / maxVal;
-                            if (endFactor > 1) endFactor = 1;
-                            let endAngle = -Math.PI + (endFactor * Math.PI);
-                            
-                            ctx.beginPath();
-                            ctx.arc(cx, cy, centerR, startAngle, endAngle, false);
-                            ctx.strokeStyle = zone.color;
-                            ctx.lineWidth = trackWidth; /* บังคับความหนาของสีโซนให้เต็มแทร็คหลัก เพื่อให้สเกลสีใหญ่สะใจ */
-                            ctx.stroke();
-                            
-                            startAngle = endAngle;
-                        });
-
-                        // 3. คำนวณหาตำแหน่งมุมของเข็มชี้จุดปัจจุบัน
-                        let factor = score / maxVal;
-                        if (factor > 1) factor = 1; if (factor < 0) factor = 0;
-                        const needleAngle = -Math.PI + (factor * Math.PI);
-
-                        // 4. คำนวватьตำแหน่งพิกัดปลายเข็ม (Center ของแนวสเกลสี)
-                        const textX = cx + centerR * Math.cos(needleAngle);
-                        const textY = cy + centerR * Math.sin(needleAngle);
-                        
-                        // 🛠️ แก้ไขพิกัดการวาดวงกลมและอิโมจิให้แสดงผลกลางหลอดพลังอย่างถูกต้องและไม่หลุดขอบ
-                        ctx.beginPath();
-                        ctx.arc(textX, textY, 11, 0, 2 * Math.PI); // 🛠️ ลดขนาดรัศมีวงกลมพื้นหลังจาก 14px เป็น 11px ให้ฟิตพอดีหลอดพลัง
-                        ctx.fillStyle = '#060608'; // 🛠️ เปลี่ยนเป็นสีทึบเพื่อไม่ให้แถบพลังตัดผ่านตัวอิโมจิ
-                        ctx.fill();
-                        ctx.strokeStyle = '#ffffff'; 
-                        ctx.lineWidth = 2.5; 
-                        ctx.stroke();
-
-                        // 5. วาดตัวชี้บอกตำแหน่งด้วย อิโมจิ (Emoji Pointer)
-                        ctx.font = "12px Arial"; // 🛠️ ลดขนาดฟอนต์อิโมจิจาก 16px เป็น 12px เพื่อความสวยงามสมส่วนไม่ล้นวงกลม
-                        ctx.textAlign = "center";
-                        ctx.textBaseline = "middle";
-                        ctx.fillText(emoji, textX, textY); // 🛠️ แก้ไขให้เรนเดอร์อิโมจิทุกครั้งที่มีการวาดชุดข้อมูลสำเร็จ ป้องกันอาการอิโมจิหาย
-
-                        ctx.restore();
-                    }
-                }]
-            });
-        }
-
-        function initGauges() {
-            charts['hr1'] = createGauge('gauge-hr1', 'hr');
-            charts['hr2'] = createGauge('gauge-hr2', 'hr');
-            charts['cur1'] = createGauge('gauge-cur1', 'current');
-            charts['cur2'] = createGauge('gauge-cur2', 'current');
-            charts['temp1'] = createGauge('gauge-temp1', 'temp');
-            charts['temp2'] = createGauge('gauge-temp2', 'temp');
-        }
-
-        // --- ระบบการทำงาน Dashboard ---
-        function startServices() {
-            updateClock();
-            setInterval(updateClock, 1000);
-
-            fetchData();
-            setInterval(fetchData, 57000);
-        }
-
-        async function fetchData() {
-            const statusBox = document.getElementById('syncStatus');
-            const tableTop = document.getElementById('data-table-top');
-            const tableBottom = document.getElementById('data-table-bottom');
-            
-            statusBox.innerHTML = '<span class="spin text-blue-400 text-sm">⚙️</span>';
-
-            try {
-                const finalUrl = `${SCRIPT_URL}?t=${new Date().getTime()}`;
-                const response = await fetch(finalUrl);
-                const data = await response.json();
-                
-                // 🛠️ เก็บข้อมูลดิบลงใน Cache เพื่อสตรีมส่งต่อเข้าหน้าตารางกราฟแท่ง Advance DATA
-                globalDataCached = data;
-
-                const parseNum = (val) => {
-                    if (val === undefined || val === null) return NaN;
-                    let s = String(val).replace(/[^\d.-]/g, '');
-                    return parseFloat(s);
-                };
-
-                // ฟังก์ชันช่วยจัดฟอร์แมตทศนิยม 2 ตำแหน่ง (ถ้าไม่ใช่วาลูตัวเลขให้ส่งค่าเดิมกลับไป)
-                const formatDisplayValue = (val) => {
-                    let num = parseNum(val);
-                    return !isNaN(num) ? num.toFixed(2) : val;
-                };
-
-                const findRealtimeValue = (dataArray, targetName) => {
-                    if (!dataArray || !Array.isArray(dataArray)) return null;
-                    const cleanTarget = String(targetName).replace(/\s+/g, '').toLowerCase();
-                    const found = dataArray.find(item => {
-                        if (!item.item) return false;
-                        return String(item.item).replace(/\s+/g, '').toLowerCase() === cleanTarget;
-                    });
-                    return found ? found.realtime : null;
-                };
-                
-                // เรนเดอร์ UPPER DATA (ช่อง B2:D13)
-                if (data && data.upperData) {
-                    let htmlTop = "";
-                    data.upperData.forEach(item => {
-                        let rtNum = parseNum(item.realtime);
-                        let nmNum = parseNum(item.normal);
-                        
-                        // ปรับให้เป็นสีเขียวตลอดเวลาตามต้องการ
-                        let realtimeColor = "text-green-500";
-                        htmlTop += `
-                            <tr class="border-b border-gray-900 row-update">
-                                <td class="py-2 text-gray-300 font-bold pr-4 w-[50%] dataset-item-name">${item.item}</td>
-                                <td class="text-center ${realtimeColor} font-bold pr-4 w-[28%] dataset-item-val">${formatDisplayValue(item.realtime)}</td>
-                                <td class="text-right text-green-500 font-bold w-[22%]">${formatDisplayValue(item.normal)}</td>
-                            </tr>`;
-                    });
-                    tableTop.innerHTML = htmlTop;
-
-                    // 🛠️ ดึงค่าไปใส่ในกล่องสีเหลืองฝั่ง UPPER DATA (เฉพาะตัวเลขเท่านั้น)
-                    document.getElementById('box-u-temp1').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 1') || '-');
-                    document.getElementById('box-u-temp2').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 2') || '-');
-                    document.getElementById('box-u-temp3').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 3') || '-');
-                    document.getElementById('box-u-temp4').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Temp Box 4') || '-'); // Temp Box 1 ตัวที่สอง
-                    document.getElementById('box-u-steam').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Pressure Steam') || '-');
-                    document.getElementById('box-u-lpg').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Pressure LPG') || '-');
-                    document.getElementById('box-u-conveyor').innerText = formatDisplayValue(findRealtimeValue(data.upperData, 'Current Conveyor') || '-');
+            --width-col-center: 1fr; \r
+            --width-col-right: auto; \r
+            --bg-color: #000;\r
+            --card-bg: #000; /* ปรับเป็นสีดำสนิทให้เนียนไปกับพื้นหลัง */\r
+            --card-border: rgba(33, 150, 243, 0.5); /* 🛠️ ปรับสีขอบการ์ดหลักให้จางลงครึ่งหนึ่ง (Opacity 0.5) */\r
+            --card-gray: #424242;\r
+            --card-green: #2e7d32;\r
+            --card-yellow: #fbc02d;\r
+            --card-red: #c62828;\r
+            --text-color: #ffffff;\r
+        }\r
+        body {\r
+            background-color: var(--bg-color);\r
+            color: var(--text-color);\r
+            font-family: sans-serif;\r
+            margin: 0;\r
+            padding: 10px;\r
+            box-sizing: border-box;\r
+            overflow-x: hidden; /* ป้องกันการเลื่อนซ้ายขวาเกินจำเป็น */\r
+        }\r
+        .dashboard-container {\r
+            display: grid;\r
+            grid-template-columns: var(--width-col-left) var(--width-col-center) var(--width-col-right);\r
+            gap: 15px;\r
+            align-items: start;\r
+        }\r
+        .card {\r
+            background-color: var(--card-bg);\r
+            border: 2px solid var(--card-border);\r
+            border-radius: 8px;\r
+            padding: 12px;\r
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);\r
+        }\r
+        /* ซ่อนส่วนคอลัมน์ขวาจนกว่าจะใส่รหัสผ่านถูกต้อง */\r
+        #rightColumn {\r
+            display: none;\r
+        }\r
+    </style>\r
+</head>\r
+<body>\r
+    <div class="dashboard-container">\r
+        \r
+        <div class="space-y-4">\r
+            \r
+            <div class="card">\r
+                <h2 class="text-base font-bold text-blue-400 mb-2 border-b border-blue-500/30 pb-1 text-center">AFO1B MACHINE STATUS DATA REALTIME</h2>\r
+                <div class="overflow-x-auto">\r
+                    <table class="w-full text-left border-collapse text-xs">\r
+                        <thead>\r
+                            <tr class="border-b border-gray-700 text-gray-400">\r
+                                <th class="py-1 px-1">รายการ</th>\r
+                                <th class="py-1 px-1 text-right">Real Time</th>\r
+                                <th class="py-1 px-1 text-right">ค่าปกติ</th>\r
+                            </tr>\r
+                        </thead>\r
+                        <tbody id="upperTableBody">\r
+                            \r
+                        </tbody>\r
+                    </table>\r
+                </div>\r
+            </div>\r
+\r
+            \r
+            <div class="card">\r
+                <h2 class="text-base font-bold text-teal-400 mb-2 border-b border-teal-500/30 pb-1 text-center">AFO1B PARAMETER STATUS DATA REALTIME</h2>\r
+                <div class="overflow-x-auto">\r
+                    <table class="w-full text-left border-collapse text-xs">\r
+                        <thead>\r
+                            <tr class="border-b border-gray-700 text-gray-400">\r
+                                <th class="py-1 px-1">รายการ</th>\r
+                                <th class="py-1 px-1 text-right">Real Time</th>\r
+                                <th class="py-1 px-1 text-right">ค่าปกติ</th>\r
+                            </tr>\r
+                        </thead>\r
+                        <tbody id="lowerTableBody">\r
+                            \r
+                        </tbody>\r
+                    </table>\r
+                </div>\r
+            </div>\r
+        </div>\r
+\r
+        \r
+        <div class="space-y-4">\r
+            <div class="card relative" style="height: 290px;">\r
+                <h3 class="text-sm font-bold text-blue-400 mb-1 text-center">LINE SPEED (M/MIN)</h3>\r
+                <div class="absolute top-2 right-2 text-xs bg-gray-900 px-2 py-0.5 rounded border border-gray-700 text-gray-300">\r
+                    Update: <span id="timeUpper">-</span>\r
+                </div>\r
+                <div style="position: relative; height: 240px; width: 100%;">\r
+                    <canvas id="chartUpper"></canvas>\r
+                </div>\r
+            </div>\r
+\r
+            <div class="card relative" style="height: 290px;">\r
+                <h3 class="text-sm font-bold text-teal-400 mb-1 text-center">M/C EFFICIENCY (%)</h3>\r
+                <div class="absolute top-2 right-2 text-xs bg-gray-900 px-2 py-0.5 rounded border border-gray-700 text-gray-300">\r
+                    Update: <span id="timeLower">-</span>\r
+                </div>\r
+                <div style="position: relative; height: 240px; width: 100%;">\r
+                    <canvas id="chartLower"></canvas>\r
+                </div>\r
+            </div>\r
+        </div>\r
+\r
+        \r
+        \r
+        <div class="space-y-4 w-[280px] transition-all duration-300">\r
+            \r
+            <div id="lockCard" class="card p-4 text-center">\r
+                <h3 class="text-xs font-bold text-amber-400 mb-2">🔒 ADVANCE DATA PROTECTION</h3>\r
+                <input type="password" id="passInput" placeholder="Password..." class="w-full bg-zinc-900 text-white text-xs border border-zinc-700 rounded px-2 py-1.5 mb-2 text-center focus:outline-none focus:border-amber-500" onkeydown="if(event.key==='Enter') checkPassword()">\r
+                <button onclick="checkPassword()" class="w-full bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-1.5 rounded transition">UNLOCK ACCESS</button>\r
+                <p id="lockError" class="text-[10px] text-red-500 mt-1.5 hidden">รหัสผ่านไม่ถูกต้อง ลองอีกครั้ง</p>\r
+            </div>\r
+\r
+            \r
+            <div id="rightColumn" class="space-y-4">\r
+                <div class="card" style="height: 290px;">\r
+                    <h3 class="text-xs font-bold text-purple-400 mb-1 text-center">ADVANCE DATA - UPPER</h3>\r
+                    <div style="position: relative; height: 240px; width: 100%;">\r
+                        <canvas id="chartAdvUpper"></canvas>\r
+                    </div>\r
+                </div>\r
+\r
+                <div class="card" style="height: 290px;">\r
+                    <h3 class="text-xs font-bold text-orange-400 mb-1 text-center">ADVANCE DATA - LOWER</h3>\r
+                    <div style="position: relative; height: 240px; width: 100%;">\r
+                        <canvas id="chartAdvLower"></canvas>\r
+                    </div>\r
+                </div>\r
+            </div>\r
+        </div>\r
+    </div>\r
+\r
+    <script>\r
+        // ใส่ Web App URL ที่ได้จาก Google Apps Script ที่นี่\r
+        const BASE_API_URL = "https://script.google.com/macros/s/AKfycby5I_3b7FhX16SshxR-f08pS_bN2GqPqfVf1u_pAQrB7NqL8e0/exec";\r
+\r
+        let chartUpperInstance = null;\r
+        let chartLowerInstance = null;\r
+        let chartAdvUpperInstance = null;\r
+        let chartAdvLowerInstance = null;\r
+\r
+        // อาร์เรย์สำหรับเก็บค่าเสริมของกล่อง Tooltip สำหรับกราฟ Advance\r
+        let advUpperRawData = [];\r
+        let advLowerRawData = [];\r
+\r
+        // ฟังก์ชันตรวจสอบรหัสผ่าน\r
+        function checkPassword() {\r
+            const pass = document.getElementById('passInput').value;\r
+            if (pass === '1234') { // กำหนดรหัสผ่านเป็น 1234\r
+                document.getElementById('lockCard').classList.add('hidden');\r
+                document.getElementById('rightColumn').style.display = 'block';\r
+                // ทำการเคลียร์และเรียกสเกลข้อมูลหลังแสดงคอมโพเนนต์เสร็จ\r
+                setTimeout(() => {\r
+                    fetchDashboardData();\r
+                }, 100);\r
+            } else {\r
+                const err = document.getElementById('lockError');\r
+                err.classList.remove('hidden');\r
+                document.getElementById('passInput').value = '';\r
+                document.getElementById('passInput').focus();\r
+            }\r
+        }\r
+\r
+        // ดึงข้อมูลแบบเรียลไทม์\r
+        async function fetchDashboardData() {\r
+            try {\r
+                const response = await fetch(BASE_API_URL);\r
+                const data = await response.json();\r
+                \r
+                updateTables(data.upperData, data.lowerData);\r
+                updateMainCharts(data.upperData, data.lowerData);\r
+                \r
+                // ==========================================
+                // ส่วนที่แก้ไข/เพิ่มเติม: อัปเดตกราฟ Advance DATA
+                // ==========================================
+                if (data.advanceUpper && data.advanceLower) {
+                    advUpperRawData = data.advanceUpper;
+                    advLowerRawData = data.advanceLower;
+                    updateAdvanceCharts(data.advanceUpper, data.advanceLower);
                 }
+                \r
+                const nowStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });\r
+                document.getElementById('timeUpper').innerText = nowStr;\r
+                document.getElementById('timeLower').innerText = nowStr;\r
+\r
+            } catch (error) {\r
+                console.error("Error fetching data:", error);\r
+            }\r
+        }\r
+\r
+        // ดึงข้อมูลซ้ำทุก 5 วินาที\r
+        setInterval(fetchDashboardData, 5000);\r
+\r
+        // อัปเดตตารางคอลัมน์ซ้าย\r
+        function updateTables(upperList, lowerList) {\r
+            const uBody = document.getElementById('upperTableBody');\r
+            uBody.innerHTML = '';\r
+            upperList.forEach(row => {\r
+                uBody.innerHTML += `\r
+                    <tr class="border-b border-gray-800 hover:bg-gray-900/50">\r
+                        <td class="py-1 px-1 font-medium">${row.item}</td>\r
+                        <td class="py-1 px-1 text-right text-blue-400 font-bold">${row.realtime}</td>\r
+                        <td class="py-1 px-1 text-right text-gray-400">${row.normal}</td>\r
+                    </tr>`;\r
+            });\r
+\r
+            const lBody = document.getElementById('lowerTableBody');\r
+            lBody.innerHTML = '';\r
+            lowerList.forEach(row => {\r
+                lBody.innerHTML += `\r
+                    <tr class="border-b border-gray-800 hover:bg-gray-900/50">\r
+                        <td class="py-1 px-1 font-medium">${row.item}</td>\r
+                        <td class="py-1 px-1 text-right text-teal-400 font-bold">${row.realtime}</td>\r
+                        <td class="py-1 px-1 text-right text-gray-400">${row.normal}</td>\r
+                    </tr>`;\r
+            });\r
+        }\r
+\r
+        // อัปเดตกราฟหลักตรงกลาง\r
+        function updateMainCharts(upperList, lowerList) {\r
+            const upperLabels = upperList.map(r => r.item);\r
+            const upperValues = upperList.map(r => Number(r.realtime) || 0);\r
+\r
+            const lowerLabels = lowerList.map(r => r.item);\r
+            const lowerValues = lowerList.map(r => Number(r.realtime) || 0);\r
+\r
+            // กราฟบน (Upper Main Chart)\r
+            if (!chartUpperInstance) {\r
+                const ctx = document.getElementById('chartUpper').getContext('2-2d');\r
+                chartUpperInstance = new Chart(ctx, {\r
+                    type: 'line',\r
+                    data: {\r
+                        labels: upperLabels,\r
+                        datasets: [{\r
+                            label: 'Line Speed',\r
+                            data: upperValues,\r
+                            borderColor: '#2196f3',\r
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',\r
+                            borderWidth: 3,\r
+                            pointRadius: 4,\r
+                            pointBackgroundColor: '#2196f3',\r
+                            fill: true,\r
+                            tension: 0.15\r
+                        }]\r
+                    },\r
+                    options: {\r
+                        responsive: true,\r
+                        maintainAspectRatio: false,\r
+                        scales: {\r
+                            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#aaa', size: 10 } },\r
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#aaa', size: 10 }, min: 0, max: 1500 }\r
+                        },\r
+                        plugins: {\r
+                            legend: { display: false },\r
+                            annotation: {\r
+                                annotations: {\r
+                                    triggerLine: {\r
+                                        type: 'line',\r
+                                        yMin: 1100,\r
+                                        yMax: 1100,\r
+                                        borderColor: '#fbc02d',\r
+                                        borderWidth: 2,\r
+                                        label: {\r
+                                            display: true,\r
+                                            content: 'Trigger Point',\r
+                                            position: 'end',\r
+                                            backgroundColor: 'rgba(251, 192, 45, 0.85)',\r
+                                            color: '#000',\r
+                                            font: { size: 11, weight: 'bold' }\r
+                                        }\r
+                                    },\r
+                                    criticalLine: {\r
+                                        type: 'line',\r
+                                        yMin: 1200,\r
+                                        yMax: 1200,\r
+                                        borderColor: '#c62828',\r
+                                        borderWidth: 2,\r
+                                        label: {\r
+                                            display: true,\r
+                                            content: 'Critical Point',\r
+                                            position: 'end',\r
+                                            backgroundColor: 'rgba(198, 40, 40, 0.85)',\r
+                                            color: '#fff',\r
+                                            font: { size: 11, weight: 'bold' }\r
+                                        }\r
+                                    }\r
+                                }\r
+                            }\r
+                        }\r
+                    }\r
+                });\r
+            } else {\r
+                chartUpperInstance.data.labels = upperLabels;\r
+                chartUpperInstance.data.datasets[0].data = upperValues;\r
+                chartUpperInstance.update('none');\r
+            }\r
+\r
+            // กราฟล่าง (Lower Main Chart)\r
+            if (!chartLowerInstance) {\r
+                const ctx = document.getElementById('chartLower').getContext('2-2d');\r
+                chartLowerInstance = new Chart(ctx, {\r
+                    type: 'line',\r
+                    data: {\r
+                        labels: lowerLabels,\r
+                        datasets: [{\r
+                            label: 'M/C Efficiency',\r
+                            data: lowerValues,\r
+                            borderColor: '#009688',\r
+                            backgroundColor: 'rgba(0, 150, 136, 0.1)',\r
+                            borderWidth: 3,\r
+                            pointRadius: 4,\r
+                            pointBackgroundColor: '#009688',\r
+                            fill: true,\r
+                            tension: 0.15\r
+                        }]\r
+                    },\r
+                    options: {\r
+                        responsive: true,\r
+                        maintainAspectRatio: false,\r
+                        scales: {\r
+                            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#aaa', size: 10 } },\r
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#aaa', size: 10 }, min: 0, max: 100 }\r
+                        },\r
+                        plugins: {\r
+                            legend: { display: false },\r
+                            annotation: {\r
+                                annotations: {\r
+                                    triggerLine: {\r
+                                        type: 'line',\r
+                                        yMin: 75,\r
+                                        yMax: 75,\r
+                                        borderColor: '#fbc02d',\r
+                                        borderWidth: 2,\r
+                                        label: {\r
+                                            display: true,\r
+                                            content: 'Trigger Point',\r
+                                            position: 'end',\r
+                                            backgroundColor: 'rgba(251, 192, 45, 0.85)',\r
+                                            color: '#000',\r
+                                            font: { size: 11, weight: 'bold' }\r
+                                        }\r
+                                    },\r
+                                    criticalLine: {\r
+                                        type: 'line',\r
+                                        yMin: 70,\r
+                                        yMax: 70,\r
+                                        borderColor: '#c62828',\r
+                                        borderWidth: 2,\r
+                                        label: {\r
+                                            display: true,\r
+                                            content: 'Critical Point',\r
+                                            position: 'end',\r
+                                            backgroundColor: 'rgba(198, 40, 40, 0.85)',\r
+                                            color: '#fff',\r
+                                            font: { size: 11, weight: 'bold' }\r
+                                        }\r
+                                    }\r
+                                }\r
+                            }\r
+                        }\r
+                    }\r
+                });\r
+            } else {\r
+                chartLowerInstance.data.labels = lowerLabels;\r
+                chartLowerInstance.data.datasets[0].data = lowerValues;\r
+                chartLowerInstance.update('none');\r
+            }\r
+        }\r
+\r
+        // ==========================================
+        // ส่วนที่แก้ไข/เพิ่มเติม: ฟังก์ชันอัปเดตและสร้างกราฟแท่ง Advance
+        // ==========================================
+        function updateAdvanceCharts(advUpperList, advLowerList) {
+            const advUpperLabels = advUpperList.map(r => r.label);
+            const advUpperValues = advUpperList.map(r => r.value);
 
-                // เรนเดอร์ LOWER DATA (ช่อง F2:H13)
-                if (data && data.lowerData) {
-                    let htmlBottom = "";
-                    data.lowerData.forEach(item => {
-                        let rtNum = parseNum(item.realtime);
-                        let nmNum = parseNum(item.normal);
-                        
-                        // ปรับให้เป็นสีเขียวตลอดเวลาตามต้องการ
-                        let realtimeColor = "text-green-500";
+            const advLowerLabels = advLowerList.map(r => r.label);
+            const advLowerValues = advLowerList.map(r => r.value);
 
-                        htmlBottom += `
-                            <tr class="border-b border-gray-900 row-update">
-                                <td class="py-2 text-gray-300 font-bold pr-4 w-[50%] dataset-item-name">${item.item}</td>
-                                <td class="text-center ${realtimeColor} font-bold pr-4 w-[28%] dataset-item-val">${formatDisplayValue(item.realtime)}</td>
-                                <td class="text-right text-green-500 font-bold w-[22%]">${formatDisplayValue(item.normal)}</td>
-                            </tr>`;
-                    });
-                    tableBottom.innerHTML = htmlBottom;
-
-                    // 🛠️ ดึงค่าไปใส่ในกล่องสีเหลืองฝั่ง LOWER DATA (เฉพาะตัวเลขเท่านั้น)
-                    document.getElementById('box-l-temp1').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 1') || '-');
-                    document.getElementById('box-l-temp2').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 2') || '-');
-                    document.getElementById('box-l-temp3').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 3') || '-');
-                    document.getElementById('box-l-temp4').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Temp Box 4') || '-'); // Temp Box 1 ตัวที่สอง
-                    document.getElementById('box-l-steam').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Pressure Steam') || '-');
-                    document.getElementById('box-l-lpg').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Pressure LPG') || '-');
-                    document.getElementById('box-l-conveyor').innerText = formatDisplayValue(findRealtimeValue(data.lowerData, 'Current Conveyor') || '-');
-                }
-
-                // --- ส่วนตรวจสอบสถานะการเชื่อมต่อ K2, K13 และไฟ LED จุด K3-K12 ---
-                if (data && data.connectionStatus) {
-                    const k2Val = parseNum(data.connectionStatus.k2);
-                    const k13Val = parseNum(data.connectionStatus.k13);
-                    
-                    // 1. อัปเดตสถานะของกลุ่มการ์ดฝั่ง UPPER DATA ทั้งหมด (ใช้ K2)
-                    const upperLabels = document.querySelectorAll('.status-display-upper');
-                    upperLabels.forEach(el => {
-                        if (k2Val === 1) {
-                            el.innerHTML = '● Status OK';
-                            el.className = 'status-display-upper ml-1 text-[#10b981] font-bold animate-none';
-                        } else {
-                            el.innerHTML = 'No Connection';
-                            el.className = 'status-display-upper ml-1 text-[#ef4444] font-bold animate-pulse';
-                        }
-                    });
-
-                    // 🛠️ ควบคุมการแสดงผลกลุ่มอิโมจิอนิเมชันฝั่ง UPPER DATA ตามเงื่อนไข K2 แยกอิสระ
-                    const upperEmojiContainer = document.getElementById('upper-emoji-group');
-                    if (upperEmojiContainer) {
-                        upperEmojiContainer.style.display = (k2Val === 1) ? 'block' : 'none';
-                    }
-
-                    // 2. อัปเดตสถานะของกลุ่มการ์ดฝั่ง LOWER DATA ทั้งหมดอย่างแยกเป็นอิสระ (ใช้ K13)
-                    const lowerLabels = document.querySelectorAll('.status-display-lower');
-                    lowerLabels.forEach(el => {
-                        if (k13Val === 1) {
-                            el.innerHTML = '● Status OK';
-                            el.className = 'status-display-lower ml-1 text-[#10b981] font-bold animate-none';
-                        } else {
-                            el.innerHTML = 'No Connection';
-                            el.className = 'status-display-lower ml-1 text-[#ef4444] font-bold animate-pulse';
-                        }
-                    });
-
-                    // 🛠️ ควบคุมการแสดงผลกลุ่มอิโมจิอนิเมชันฝั่ง LOWER DATA ตามเงื่อนไข K13 แยกอิสระ
-                    const lowerEmojiContainer = document.getElementById('lower-emoji-group');
-                    if (lowerEmojiContainer) {
-                        lowerEmojiContainer.style.display = (k13Val === 1) ? 'block' : 'none';
-                    }
-
-                    // อัปเดตสถานะสีของจุดสัญญาณ LED ขยายเพิ่มเป็น 10 จุด (K3 ถึง K12) 
-                    if (data.connectionStatus.k3_to_k10 && Array.isArray(data.connectionStatus.k3_to_k10)) {
-                        for (let index = 0; index < 10; index++) {
-                            const currentTargetId = `dot-k${index + 3}`; // ผลลัพธ์จะได้ไอดีตั้งแต่ dot-k3 จนถึง dot-k12
-                            const targetDotElement = document.getElementById(currentTargetId);
-                            
-                            if (targetDotElement) {
-                                const dotValue = parseNum(data.connectionStatus.k3_to_k10[index]);
-                                if (dotValue === 1) {
-                                    targetDotElement.className = 'led-dot led-green';
-                                } else {
-                                    targetDotElement.className = 'led-dot led-red';
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // --- อัปเดตค่าเกจวัด ---
-                const rawHr1 = findRealtimeValue(data.upperData, 'Burner Time');
-                const valHr1 = rawHr1 !== null ? parseNum(rawHr1) : 1158;
-                updateGaugeValue('hr1', isNaN(valHr1) ? 0 : valHr1, 'val-hr1');
-
-                const rawHr2 = findRealtimeValue(data.lowerData, 'Burner Time');
-                const valHr2 = rawHr2 !== null ? parseNum(rawHr2) : 852;
-                updateGaugeValue('hr2', isNaN(valHr2) ? 0 : valHr2, 'val-hr2');
-
-                const rawCur1 = findRealtimeValue(data.upperData, 'Current Blower Box 3');
-                const valCur1 = rawCur1 !== null ? parseNum(rawCur1) : 2.06;
-                updateGaugeValue('cur1', isNaN(valCur1) ? 0 : valCur1, 'val-cur1', true);
-
-                const rawCur2 = findRealtimeValue(data.lowerData, 'Current Blower Box 2');
-                const valCur2 = rawCur2 !== null ? parseNum(rawCur2) : 2.05;
-                updateGaugeValue('cur2', isNaN(valCur2) ? 0 : valCur2, 'val-cur2', true);
-
-                const rawTemp1 = findRealtimeValue(data.upperData, 'Temp Box 2');
-                const valTemp1 = rawTemp1 !== null ? parseNum(rawTemp1) : 250;
-                updateGaugeValue('temp1', isNaN(valTemp1) ? 0 : valTemp1, 'val-temp1');
-
-                const rawTemp2 = findRealtimeValue(data.lowerData, 'Temp Box 3');
-                const valTemp2 = rawTemp2 !== null ? parseNum(rawTemp2) : 248;
-                updateGaugeValue('temp2', isNaN(valTemp2) ? 0 : valTemp2, 'val-temp2');
-
-                statusBox.innerHTML = '✅';
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                statusBox.innerHTML = '❌';
-            }
-        }
-
-        // ปรับให้ระบบอัปเดตเกจเรียกวาดใหม่ได้อย่างสมบูรณ์แบบโดยที่ Pointer วงกลมและอิโมจิไม่หลุดหาย
-        function updateGaugeValue(key, value, textId, isFloat = false) {
-            document.getElementById(textId).innerText = isFloat ? value.toFixed(2) : value;
-            if (charts[key]) {
-                charts[key].data.datasets[0].needleValue = value;
-                charts[key].update();
-            }
-        }
-
-        // ⚙️ 🛠️ [ฟังก์ชันแก้ไขและเพิ่มใหม่สำหรับระบบกราฟแท่งแบบสมบูรณ์] สั่งเปิดโมดอลป๊อปอัพเพื่อเรนเดอร์กราฟแท่ง Advance DATA ทั้งระบบ Upper และ Lower
-        function openChartModal(type) {
-            document.getElementById('modalTitle').innerText = type === 'upper' ? '📊 Advance DATA : UPPER' : '📊 Advance DATA : LOWER';
-            document.getElementById('chartModal').style.display = 'flex';
-            renderAdvanceBarChart(type);
-        }
-
-        function closeChartModal(e) {
-            document.getElementById('chartModal').style.display = 'none';
-        }
-
-        // ⚙️ 🛠️ [ฟังก์ชันเพิ่มใหม่] สร้างและอัปเดตตัวกราฟแท่ง (Bar Chart) ตามโครงสร้างตารางและเงื่อนไข Trigger/Forecast ทูลทิปแบบไดนามิก
-        function renderAdvanceBarChart(type) {
-            const ctx = document.getElementById('advanceBarChart').getContext('2d');
-            
-            // เตรียมโครงสร้างอาเรย์ของข้อมูลรองรับกรณีไม่มีสัญญาณตอบกลับจากเซิร์ฟเวอร์
-            let labels = [];
-            let heights = [];
-            let triggers = [];
-            let forecasts = [];
-
-            // ทำการแยกแยะการดึงข้อมูลจากจุดชุดข้อมูลตามสั่ง (Upper ดึงช่วง 0-3, Lower ดึงช่วง 4-7)
-            if (globalDataCached && globalDataCached.advanceData && Array.isArray(globalDataCached.advanceData)) {
-                let startIndex = (type === 'upper') ? 0 : 4;
-                let endIndex = (type === 'upper') ? 3 : 7;
-                
-                for (let i = startIndex; i <= endIndex; i++) {
-                    let record = globalDataCached.advanceData[i];
-                    if (record) {
-                        labels.push(record.name || `Burner ${i - startIndex + 1}`);
-                        heights.push(parseFloat(String(record.height).replace(/[^\d.-]/g, '')) || 0);
-                        triggers.push(record.trigger !== undefined ? record.trigger : '-');
-                        forecasts.push(record.forecast !== undefined ? record.forecast : '-');
-                    } else {
-                        labels.push(`Burner ${i - startIndex + 1}`);
-                        heights.push(0);
-                        triggers.push('-');
-                        forecasts.push('-');
-                    }
-                }
-            } else {
-                // ข้อมูลจำลองกรณีเซิร์ฟเวอร์หลักยังไม่ได้โหลด
-                labels = ['Burner 1', 'Burner 2', 'Burner 3', 'Burner 4'];
-                heights = [900, 880, 820, 890];
-                triggers = ['1000', '1000', '1000', '1000'];
-                forecasts = ['1100', '1120', '1050', '1110'];
-            }
-
-            // ทำลายอินสแตนซ์กราฟเดิมเพื่อป้องกันการซ้อนทับกันเมื่อเปลี่ยนหน้าหรือคลิกสลับแท็บไปมา
-            if (barChartInstance) {
-                barChartInstance.destroy();
-            }
-
-            // สร้าง Bar Chart แท่งแนวตั้งในสไตล์ Dark Mode พร้อมเส้นควบคุมแนวนอน (Annotation)
-            barChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: type === 'upper' ? 'Upper Burner' : 'Lower Burner',
-                        data: heights,
-                        backgroundColor: 'rgba(33, 150, 243, 0.75)',
-                        borderColor: '#2196F3',
-                        borderWidth: 1.5,
-                        barPercentage: 0.45, // ปรับขนาดหน้ากว้างแท่งให้สมส่วนใกล้เคียงรูปตัวอย่าง
-                        // แนบอาเรย์เสริมเพื่อใช้งานในกล่องสลัก Tooltip บนแกนแท่งชี้
-                        triggersData: triggers,
-                        forecastsData: forecasts
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#ccc', font: { size: 12, weight: 'bold' } }
-                        },
-                        y: {
-                            min: 0,
-                            max: 1400, // กำหนดขอบเขตความสูงเผื่อไว้สำหรับแสดงเส้น Critical (1200)
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#aaa', stepSize: 200 }
-                        }
+            // 1. Advance Upper Chart (กราฟแท่งดึงจาก F18:K21)
+            if (!chartAdvUpperInstance) {
+                const ctx = document.getElementById('chartAdvUpper').getContext('2d');
+                chartAdvUpperInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: advUpperLabels,
+                        datasets: [{
+                            data: advUpperValues,
+                            backgroundColor: 'rgba(156, 39, 176, 0.75)',
+                            borderColor: '#9c27b0',
+                            borderWidth: 1.5,
+                            barThickness: 25
+                        }]
                     },
-                    plugins: {
-                        legend: { display: false }, // ซ่อนป้ายชื่อ Dataset หลักเพื่อความสะอาดตาตรงตามภาพวาด
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            titleColor: '#2196F3',
-                            titleFont: { size: 13, weight: 'bold' },
-                            bodyColor: '#fff',
-                            bodyFont: { size: 12 },
-                            borderColor: 'rgba(33, 150, 243, 0.4)',
-                            borderWidth: 1,
-                            padding: 10,
-                            displayColors: false,
-                            callbacks: {
-                                // 🛠️ ฟังก์ชันการจัดการปรับแต่งเนื้อหากล่องข้อความคำพูด (Tooltip) ให้ขึ้นบรรทัดใหม่แสดง Trigger และ Forecast
-                                label: function(context) {
-                                    let index = context.dataIndex;
-                                    let ds = context.dataset;
-                                    let currentVal = context.parsed.y;
-                                    let trigVal = ds.triggersData[index];
-                                    let foreVal = ds.forecastsData[index];
-                                    
-                                    return [
-                                        `Value: ${currentVal}`,
-                                        `Trigger: ${trigVal}`,
-                                        `Forecast: ${foreVal}`
-                                    ];
-                                }
-                            }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#aaa', font: { size: 9 } } },
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#aaa', font: { size: 9 } }, beginAtZero: true }
                         },
-                        // 🛠️ ตกแต่งเส้นกำกับแบ่งระดับเขตปลอดภัยความคุ้มครองระดับความสูงตามตัวอย่าง S__76537858.jpg
-                        annotation: {
-                            annotations: {
-                                triggerLine: {
-                                    type: 'line',
-                                    yMin: 1000,
-                                    yMax: 1000,
-                                    borderColor: '#fbc02d', // เส้นสีเหลือง
-                                    borderWidth: 2,
-                                    label: {
-                                        display: true,
-                                        content: 'Trigger Point',
-                                        position: 'end',
-                                        backgroundColor: 'rgba(251, 192, 45, 0.85)',
-                                        color: '#000',
-                                        font: { size: 11, weight: 'bold' }
-                                    }
-                                },
-                                criticalLine: {
-                                    type: 'line',
-                                    yMin: 1200,
-                                    yMax: 1200,
-                                    borderColor: '#c62828', // เส้นสีแดง
-                                    borderWidth: 2,
-                                    label: {
-                                        display: true,
-                                        content: 'Critical Point',
-                                        position: 'end',
-                                        backgroundColor: 'rgba(198, 40, 40, 0.85)',
-                                        color: '#fff',
-                                        font: { size: 11, weight: 'bold' }
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: function(context) {
+                                        const index = context[0].dataIndex;
+                                        const itemData = advUpperRawData[index];
+                                        if (itemData) {
+                                            return `Trigger: ${itemData.trigger}\nForecast: ${itemData.forecast}`;
+                                        }
+                                        return '';
                                     }
                                 }
                             }
                         }
                     }
-                }
-            });
-        }
+                });
+            } else {
+                chartAdvUpperInstance.data.labels = advUpperLabels;
+                chartAdvUpperInstance.data.datasets[0].data = advUpperValues;
+                chartAdvUpperInstance.update('none');
+            }
 
-        window.onload = () => document.getElementById('passInput').focus();
-    </script>
-</body>
+            // 2. Advance Lower Chart (กราฟแท่งดึงจาก F22:K25)
+            if (!chartAdvLowerInstance) {
+                const ctx = document.getElementById('chartAdvLower').getContext('2d');
+                chartAdvLowerInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: advLowerLabels,
+                        datasets: [{
+                            data: advLowerValues,
+                            backgroundColor: 'rgba(255, 112, 67, 0.75)',
+                            borderColor: '#ff7043',
+                            borderWidth: 1.5,
+                            barThickness: 25
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#aaa', font: { size: 9 } } },
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#aaa', font: { size: 9 } }, beginAtZero: true }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: function(context) {
+                                        const index = context[0].dataIndex;
+                                        const itemData = advLowerRawData[index];
+                                        if (itemData) {
+                                            return `Trigger: ${itemData.trigger}\nForecast: ${itemData.forecast}`;
+                                        }
+                                        return '';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                chartAdvLowerInstance.data.labels = advLowerLabels;
+                chartAdvLowerInstance.data.datasets[0].data = advLowerValues;
+                chartAdvLowerInstance.update('none');
+            }
+        }
+\r
+        window.onload = () => document.getElementById('passInput').focus();\r
+    </script>\r
+</body>\r
 </html>
