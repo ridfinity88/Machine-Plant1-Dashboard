@@ -1078,18 +1078,22 @@
                             callbacks: {
                                 // 🛠️ ปรับแต่ง Tooltip ให้แสดงทั้งความสูงปัจจุบัน, Trigger และ Forecast ในรูปแบบขึ้นบรรทัดใหม่
                                 label: function(context) {
-                                    let index = context.dataIndex;
-                                    let ds = context.dataset;
-                                    let currentVal = context.parsed.y;
-                                    let trigVal = ds.triggersData[index];
-                                    let foreVal = ds.forecastsData[index];
-                                    
-                                    return [
-                                        `Value: ${currentVal}`,
-                                        `Trigger: ${trigVal}`,
-                                        `Forecast: ${foreVal}`
-                                    ];
-                                }
+    let index = context.dataIndex;
+    let ds = context.dataset;
+    let currentVal = context.parsed.y;
+    let trigVal = ds.triggersData[index];
+    let foreVal = ds.forecastsData[index];
+    
+    // แปลงค่า Forecast ให้เป็นทศนิยม 2 ตำแหน่งหากเป็นตัวเลขที่มีนัยสำคัญ
+    let foreNum = parseFloat(String(foreVal).replace(/[^\d.-]/g, ''));
+    let displayForecast = !isNaN(foreNum) ? foreNum.toFixed(2) : foreVal;
+    
+    return [
+        `Value: ${currentVal}`,
+        `Trigger: ${trigVal}`,
+        `Forecast: ${displayForecast}`
+    ];
+}
                             }
                         },
                         annotation: {
