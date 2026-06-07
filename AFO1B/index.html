@@ -594,7 +594,7 @@
 
     <script>
         const MY_PASS = "1234";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKyCo2FLzNg4vhQjb4SFBAgCSRGLV2rPFQpI7SCCvi4qukTc9Iv7HQJ7Z1NIIyYF4uwQ/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJ4heCnKV97JUnLeac-bwUKJvwXGRgfOnJU1Yv-PwBqpeckCkzmCH2IjrIM8oZvH5F_g/exec";
         
         let charts = {};
 
@@ -980,7 +980,7 @@
             }
         }
 
-        // ⚙️ 🛠️ [ฟังก์ชันแก้ไขและเพิ่มใหม่สำหรับระบบกราฟแท่งแบบสมบูรณ์] สั่งเปิดโมดอลป๊อปอัพเพื่อเรนเดอร์กราฟแท่ง Advance DATA ทั้งระบบ Upper และ Lower
+        // ⚙️ 🛠️ สั่งเปิดโมดอลป๊อปอัพเพื่อเรนเดอร์กราฟแท่ง Advance DATA ทั้งระบบ Upper และ Lower
         function openChartModal(type) {
             document.getElementById('modalTitle').innerText = type === 'upper' ? '📊 Advance DATA : UPPER' : '📊 Advance DATA : LOWER';
             document.getElementById('chartModal').style.display = 'flex';
@@ -991,21 +991,19 @@
             document.getElementById('chartModal').style.display = 'none';
         }
 
-        // ⚙️ 🛠️ [ฟังก์ชันเพิ่มใหม่] สร้างและอัปเดตตัวกราฟแท่ง (Bar Chart) ตามโครงสร้างตารางและเงื่อนไข Trigger/Forecast ทูลทิปแบบไดนามิก
+        // ⚙️ 🛠️ สร้างและอัปเดตตัวกราฟแท่ง (Bar Chart) ตามโครงสร้างตารางและเงื่อนไข Trigger/Forecast ทูลทิปแบบไดนามิก
         function renderAdvanceBarChart(type) {
             const ctx = document.getElementById('advanceBarChart').getContext('2d');
             
-            // เตรียมโครงสร้างอาเรย์ของข้อมูลรองรับกรณีไม่มีสัญญาณตอบกลับจากเซิร์ฟเวอร์
             let labels = [];
             let heights = [];
             let triggers = [];
             let forecasts = [];
 
-            // ทำการแยกแยะการดึงข้อมูลจากจุดชุดข้อมูลตามสั่ง (Upper ดึงช่วง index 0-3, Lower ดึงช่วง index 4-7)
+            // ดึงข้อมูลจริงจาก Spreadsheet (ผ่าน globalDataCached.advanceData) มาแมปเข้ากราฟ
             if (globalDataCached && globalDataCached.advanceData && Array.isArray(globalDataCached.advanceData)) {
-                // กำหนดดัชนีเริ่มต้นและสิ้นสุดให้สอดคล้องกับพิกัดบน Sheet ของทั้งสองฝั่งเพื่อไม่ให้ข้อมูลปนกัน
-                // type === 'upper' -> ดัชนี 0-3 (ตรงกับช่องแถว 18 ถึง 21 ของ Sheet: F18-F21, G18-G21, J18-J21, K18-K21)
-                // type === 'lower' -> ดัชนี 4-7 (ตรงกับช่องแถว 22 ถึง 25 ของ Sheet: F22-F25, G22-G25, J22-J25, K22-K25)
+                // type === 'upper' -> ดึง Index 0-3 (ตรงกับแถว 18-21 ในชีต)
+                // type === 'lower' -> ดึง Index 4-7 (ตรงกับแถว 22-25 ในชีต)
                 let startIndex = (type === 'upper') ? 0 : 4;
                 let endIndex = (type === 'upper') ? 3 : 7;
                 
@@ -1024,19 +1022,17 @@
                     }
                 }
             } else {
-                // ข้อมูลจำลองกรณีเซิร์ฟเวอร์หลักยังไม่ได้โหลด
                 labels = ['Burner 1', 'Burner 2', 'Burner 3', 'Burner 4'];
-                heights = [900, 880, 820, 890];
-                triggers = ['1000', '1000', '1000', '1000'];
-                forecasts = ['1100', '1120', '1050', '1110'];
+                heights = [0, 0, 0, 0];
+                triggers = ['-', '-', '-', '-'];
+                forecasts = ['-', '-', '-', '-'];
             }
 
-            // ทำลายอินสแตนซ์กราฟเดิมเพื่อป้องกันการซ้อนทับกันเมื่อเปลี่ยนหน้าหรือคลิกสลับแท็บไปมา
             if (barChartInstance) {
                 barChartInstance.destroy();
             }
 
-            // สร้าง Bar Chart แท่งแนวตั้งในสไตล์ Dark Mode พร้อมเส้นควบคุมแนวนอน (Annotation)
+            // สร้างโครงสร้างกราฟแท่ง
             barChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -1047,8 +1043,7 @@
                         backgroundColor: 'rgba(33, 150, 243, 0.75)',
                         borderColor: '#2196F3',
                         borderWidth: 1.5,
-                        barPercentage: 0.45, // ปรับขนาดหน้ากว้างแท่งให้สมส่วนใกล้เคียงรูปตัวอย่าง
-                        // แนบอาเรย์เสริมเพื่อใช้งานในกล่องสลัก Tooltip บนแกนแท่งชี้
+                        barPercentage: 0.45,
                         triggersData: triggers,
                         forecastsData: forecasts
                     }]
@@ -1063,13 +1058,13 @@
                         },
                         y: {
                             min: 0,
-                            max: 1400, // กำหนดขอบเขตความสูงเผื่อไว้สำหรับแสดงเส้น Critical (1200)
+                            max: 1400, 
                             grid: { color: 'rgba(255,255,255,0.05)' },
                             ticks: { color: '#aaa', stepSize: 200 }
                         }
                     },
                     plugins: {
-                        legend: { display: false }, // ซ่อนป้ายชื่อ Dataset หลักเพื่อความสะอาดตาตรงตามภาพวาด
+                        legend: { display: false },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.95)',
                             titleColor: '#2196F3',
@@ -1081,7 +1076,7 @@
                             padding: 10,
                             displayColors: false,
                             callbacks: {
-                                // 🛠6 ฟังก์ชันการจัดการปรับแต่งเนื้อหากล่องข้อความคำพูด (Tooltip) ให้ขึ้นบรรทัดใหม่แสดง Trigger และ Forecast
+                                // 🛠️ ปรับแต่ง Tooltip ให้แสดงทั้งความสูงปัจจุบัน, Trigger และ Forecast ในรูปแบบขึ้นบรรทัดใหม่
                                 label: function(context) {
                                     let index = context.dataIndex;
                                     let ds = context.dataset;
@@ -1097,14 +1092,13 @@
                                 }
                             }
                         },
-                        // 🛠6 ตกแต่งเส้นกำกับแบ่งระดับเขตปลอดภัยความคุ้มครองระดับความสูงตามตัวอย่าง S__76537858.jpg
                         annotation: {
                             annotations: {
                                 triggerLine: {
                                     type: 'line',
                                     yMin: 1000,
                                     yMax: 1000,
-                                    borderColor: '#fbc02d', // เส้นสีเหลือง
+                                    borderColor: '#fbc02d',
                                     borderWidth: 2,
                                     label: {
                                         display: true,
@@ -1119,7 +1113,7 @@
                                     type: 'line',
                                     yMin: 1200,
                                     yMax: 1200,
-                                    borderColor: '#c62828', // เส้นสีแดง
+                                    borderColor: '#c62828',
                                     borderWidth: 2,
                                     label: {
                                         display: true,
