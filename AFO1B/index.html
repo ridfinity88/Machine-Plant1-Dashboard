@@ -1001,7 +1001,7 @@
             let triggers = [];
             let forecasts = [];
 
-            // ทำการแยกแยะการดึงข้อมูลจากจุดชุดข้อมูลตามสั่ง (Upper ดึงช่วง 0-3, Lower ดึงช่วง 4-7)
+            // ทำการแยกแยะการดึงข้อมูลจากจุดชุดข้อมูลตามสั่ง (Upper ดึงช่วง Index 0-3, Lower ดึงช่วง Index 4-7)
             if (globalDataCached && globalDataCached.advanceData && Array.isArray(globalDataCached.advanceData)) {
                 let startIndex = (type === 'upper') ? 0 : 4;
                 let endIndex = (type === 'upper') ? 3 : 7;
